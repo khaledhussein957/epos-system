@@ -21,5 +21,9 @@ export const ENV = {
   SMTP_EMAIL: process.env.SMTP_EMAIL || "",
   SMTP_PASSWORD: process.env.SMTP_PASSWORD || "",
 
-  CORS_ORIGIN: process.env.CORS_ORIGIN || "http://localhost:3000",
-};
+  CORS_ORIGIN: process.env.CORS_ORIGIN || (() => {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("CORS_ORIGIN must be set in production");
+    }
+    return "http://localhost:3000";
+  })(),};

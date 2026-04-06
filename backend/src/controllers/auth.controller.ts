@@ -7,7 +7,7 @@ import {
   resetPassword,
 } from "../services/auth.service";
 
-import { formatZodError } from "../utils/validation.util.ts";
+import { formatZodError } from "../utils/validation.util";
 
 import {
   forgotPasswordSchema,
@@ -79,13 +79,13 @@ export const recoverPasswordAccount = async (req: Request, res: Response) => {
     res.json({
       message: "Password recovery email sent if the email is registered.",
     });
-  } catch (error: any) {
-    console.log("❌ Error in recovery password account:", error);
-    res.status(500).json({
-      message: error.message || "Failed to send password recovery email",
+  } catch (error: unknown) {
+    // Log the error server-side but return generic message to prevent enumeration
+    console.error("Error in recovery password account:", error);
+    res.json({
+      message: "Password recovery email sent if the email is registered.",
     });
-  }
-};
+  }};
 
 export const resetPasswordAccount = async (req: Request, res: Response) => {
   try {

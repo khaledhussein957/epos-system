@@ -2,13 +2,24 @@ import type { Request, Response, NextFunction } from "express";
 
 import { ENV } from "../config/env";
 
-export const errorHandler = (err: Error, _req: Request, res: Response, _next: NextFunction) => {
+export const errorHandler = (
+  err: Error,
+  _req: Request,
+  res: Response,
+  _next: NextFunction,
+) => {
   console.log("Error:", err.message);
 
   const statusCode = res.statusCode >= 400 ? res.statusCode : 500;
+  const isProduction = ENV.NODE_ENV === "production";
+  const message =
+    isProduction && statusCode === 500
+      ? "Internal Server Error"
+      : err.message || "Internal Server Error";
+
   res.status(statusCode).json({
-    message: err.message || "Internal Server Error",
-    ...(ENV.NODE_ENV === "development" && { stack: err.stack }),
+    message,
+    ...(!isProduction && { stack: err.stack }),
   });
 };
 

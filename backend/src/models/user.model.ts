@@ -28,8 +28,7 @@ export const users = pgTable("users", {
   resetPasswordToken: text("reset_password_token"),
   resetPasswordTokenExpiry: timestamp("reset_password_token_expiry"),
 
-  resetPasswordEmailCount: integer("reset_password_email_count").default(0),
-  resetPasswordLastSent: timestamp("reset_password_last_sent"),
+  resetPasswordEmailCount: integer("reset_password_email_count").default(0).notNull(),  resetPasswordLastSent: timestamp("reset_password_last_sent"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")

@@ -40,7 +40,7 @@ export const registerUser = async (
       phone,
       password: hashedPassword,
       role,
-      profilePicture: name[0]!.toUpperCase(),
+      profilePicture: name.trim()[0]?.toUpperCase() ?? "U",
       lastLogin: new Date(),
     })
     .returning();
@@ -50,6 +50,7 @@ export const registerUser = async (
   }
 
   const userToken = generateToken(user.id, user.role);
+  const now = new Date();
 
   return {
     message: "Registration successful",
@@ -61,7 +62,7 @@ export const registerUser = async (
       phone: user.phone,
       role: user.role,
       isBlock: user.isBlock,
-      lastLogin: user.lastLogin,
+      lastLogin: now,
       profilePicture: user.profilePicture,
     },
   };
@@ -71,6 +72,8 @@ export const loginUser = async (email: string, password: string) => {
   if (!email || !password) {
     throw new Error("All fields are required");
   }
+
+  email = email.toLowerCase().trim();
 
   const user = await db.query.users.findFirst({
     where: (user, { eq }) => eq(user.email, email),
@@ -83,8 +86,6 @@ export const loginUser = async (email: string, password: string) => {
   if (!isPasswordValid) {
     throw new Error("Invalid email or password");
   }
-
-  email = email.toLowerCase().trim();
 
   if (user.isBlock) {
     throw new Error("Your account has been blocked");
@@ -116,6 +117,8 @@ export const recoveryPassword = async (email: string) => {
   if (!email) {
     throw new Error("Email is required");
   }
+
+  email = email.toLowerCase().trim();
 
   const user = await db.query.users.findFirst({
     where: (user, { eq }) => eq(user.email, email),
@@ -152,10 +155,10 @@ export const recoveryPassword = async (email: string) => {
   const resetToken = generateResetToken();
   const tokenExpiry = new Date(Date.now() + 3600000); // Token valid for 1 hour
 
-  console.log(
-    "Reset Token:", resetToken,
-    "Token Expires:", tokenExpiry
-  )
+  // TODO: Remove or gate behind debug flag before production
+  if (process.env.NODE_ENV === "development") {
+    console.log("Reset Token:", resetToken, "Token Expires:", tokenExpiry);
+  }
 
   await db
     .update(users)
@@ -189,15 +192,10 @@ export const resetPassword = async (
   }
 
   const user = await db.query.users.findFirst({
-    where: (user, { isNotNull }) => isNotNull(user.resetPasswordToken),
+    where: (user, { eq }) => eq(user.resetPasswordToken, token),
   });
 
   if (!user) throw new Error("Invalid token");
-
-  if (user.resetPasswordToken !== token) {
-    throw new Error("Invalid token");
-  }
-
   if (
     user.resetPasswordTokenExpiry &&
     new Date() > new Date(user.resetPasswordTokenExpiry)
