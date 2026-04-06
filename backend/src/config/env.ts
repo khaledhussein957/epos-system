@@ -20,4 +20,6 @@ export const ENV = {
 
   SMTP_EMAIL: process.env.SMTP_EMAIL || "",
   SMTP_PASSWORD: process.env.SMTP_PASSWORD || "",
+
+  CORS_ORIGIN: process.env.CORS_ORIGIN || "http://localhost:3000",
 };

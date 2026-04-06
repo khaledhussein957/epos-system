@@ -29,7 +29,7 @@ export const orders = pgTable(
       .notNull()
       .references(() => customers.id),
 
-    total: integer("total").notNull(),
+    total: text("total").notNull(),
 
     payment_method: PaymentMethod("payment_method").notNull(),
 
