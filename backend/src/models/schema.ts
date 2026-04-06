@@ -1,4 +1,5 @@
-import { users } from "./user.model";
+import { relations } from "drizzle-orm";
+import { users, UserRole } from "./user.model";
 import { products } from "./product.model";
 import { categories } from "./category.model";
 import { orders } from "./orders.model";
@@ -7,6 +8,7 @@ import { customers } from "./customers.model";
 
 export const schema = {
   users,
+  UserRole,
   products,
   categories,
   orders,
@@ -14,62 +16,44 @@ export const schema = {
   customers,
 };
 
-export const relations = {
-  users: {
-    orders: {
-      relation: "hasMany",
-      target: "orders",
-      fields: ["id"],
-    },
-  },
-  products: {
-    category: {
-      relation: "belongsTo",
-      target: "categories",
-      fields: ["category_id"],
-    },
-  },
-  categories: {
-    products: {
-      relation: "hasMany",
-      target: "products",
-      fields: ["id"],
-    },
-  },
-  orders: {
-    user: {
-      relation: "belongsTo",
-      target: "users",
-      fields: ["user_id"],
-    },
-    customer: {
-      relation: "belongsTo",
-      target: "customers",
-      fields: ["customer_id"],
-    },
-    orderItems: {
-      relation: "hasMany",
-      target: "orderItems",
-      fields: ["id"],
-    },
-  },
-  orderItems: {
-    order: {
-      relation: "belongsTo",
-      target: "orders",
-      fields: ["order_id"],
-    },
-    product: {
-      relation: "belongsTo",
-      target: "products",
-      fields: ["product_id"],
-    },
-  },
-  customers: {
-    orders: {
-      relation: "hasMany",
-      target: "orders",
-      fields: ["id"],
-    },
-  },
-};
+export const usersRelations = relations(users, ({ many }) => ({
+  orders: many(orders),
+}));
+
+export const productsRelations = relations(products, ({ one }) => ({
+  category: one(categories, {
+    fields: [products.category_id],
+    references: [categories.id],
+  }),
+}));
+
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  products: many(products),
+}));
+
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  user: one(users, {
+    fields: [orders.user_id],
+    references: [users.id],
+  }),
+  customer: one(customers, {
+    fields: [orders.customer_id],
+    references: [customers.id],
+  }),
+  orderItems: many(orderItems),
+}));
+
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderItems.order_id],
+    references: [orders.id],
+  }),
+  product: one(products, {
+    fields: [orderItems.product_id],
+    references: [products.id],
+  }),
+}));
+
+export const customersRelations = relations(customers, ({ many }) => ({
+  orders: many(orders),
+}));

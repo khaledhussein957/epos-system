@@ -1,10 +1,4 @@
-import {
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-  pgEnum,
-} from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, pgEnum } from "drizzle-orm/pg-core";
 
 export const UserRole = pgEnum("user_role", ["admin", "cashier", "customer"]);
 
@@ -21,5 +15,8 @@ export const users = pgTable("users", {
   profilePicture: text("profile_picture"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updated_at: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
 });
