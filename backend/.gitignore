@@ -6,8 +6,6 @@ out
 dist
 *.tgz
 
-drizzle.config.ts
-
 # code coverage
 coverage
 *.lcov
