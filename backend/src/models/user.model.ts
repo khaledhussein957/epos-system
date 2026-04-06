@@ -21,5 +21,5 @@ export const users = pgTable("users", {
   profilePicture: text("profile_picture"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
 });

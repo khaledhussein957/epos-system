@@ -1,8 +1,8 @@
 import { users } from "./user.model";
 import { products } from "./product.model";
-import { categories } from "./catgory.model";
+import { categories } from "./category.model";
 import { orders } from "./orders.model";
-import { orderItems } from "./ordetItems.model";
+import { orderItems } from "./orderItems.model";
 import { customers } from "./customers.model";
 
 export const schema = {

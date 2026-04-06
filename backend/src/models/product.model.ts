@@ -8,7 +8,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 
-import { categories } from "./catgory.model";
+import { categories } from "./category.model";
 
 export const products = pgTable("products", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -29,7 +29,7 @@ export const products = pgTable("products", {
   qr_code: text("qr_code").notNull(),
 
   created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
 }, (table) => ({
   categoryIdIdx: index("products_category_id_idx").on(table.category_id),
   createdAtIdx: index("products_created_at_idx").on(table.created_at),

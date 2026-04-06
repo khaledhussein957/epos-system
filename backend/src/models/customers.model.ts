@@ -8,5 +8,5 @@ export const customers = pgTable("customers", {
   email: text("email").notNull().unique(),
 
   created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
 });

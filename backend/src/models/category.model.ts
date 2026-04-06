@@ -5,5 +5,5 @@ export const categories = pgTable("categories", {
   name: text("name").notNull(),
 
   created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
