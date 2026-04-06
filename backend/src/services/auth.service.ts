@@ -1,13 +1,22 @@
-import { db } from "../config/db";
-import { users } from "../models/user.model";
 import { eq } from "drizzle-orm";
+
+import { db } from "../config/db";
+
+import { users } from "../models/user.model";
 
 import {
   comparePassword,
-  generateResetToken,
+  generateResetPasswordCode,
   generateToken,
   hashPassword,
+  isResetPasswordCodeExpired,
+  resetPasswordCodeExpiration,
 } from "../utils/auth.util";
+decodeURIComponent;
+import {
+  sendResetPasswordEmail,
+  sendSuccessResetPasswordEmail,
+} from "../emails/emailHandler";
 
 export const registerUser = async (
   name: string,
@@ -124,18 +133,17 @@ export const recoveryPassword = async (email: string) => {
     where: (user, { eq }) => eq(user.email, email),
   });
   if (!user) {
-    throw new Error("User not found");
+    throw new Error("User does not exist");
   }
 
   const now = new Date();
   const lastSent = user.resetPasswordLastSent;
   let resetCount = Number(user.resetPasswordEmailCount ?? 0);
 
+  // Rate limiting: 1 min between requests
   if (lastSent) {
     const elapsed = now.getTime() - new Date(lastSent).getTime();
-    if (elapsed >= 24 * 60 * 60 * 1000) {
-      resetCount = 0;
-    }
+    if (elapsed >= 24 * 60 * 60 * 1000) resetCount = 0; // reset daily counter
     if (elapsed < 60 * 1000) {
       return {
         message:
@@ -152,25 +160,28 @@ export const recoveryPassword = async (email: string) => {
 
   resetCount += 1;
 
-  const resetToken = generateResetToken();
-  const tokenExpiry = new Date(Date.now() + 3600000); // Token valid for 1 hour
+  const resetCode = await generateResetPasswordCode();
+  const codeExpiry = resetPasswordCodeExpiration(15); // 15 minutes
 
-  // TODO: Remove or gate behind debug flag before production
   if (process.env.NODE_ENV === "development") {
-    console.log("Reset Token:", resetToken, "Token Expires:", tokenExpiry);
+    console.log("Reset Code:", resetCode, "Code Expires:", codeExpiry);
   }
 
   await db
     .update(users)
     .set({
-      resetPasswordToken: resetToken,
-      resetPasswordTokenExpiry: tokenExpiry,
+      resetPasswordCode: resetCode,
+      resetPasswordCodeExpiry: codeExpiry,
       resetPasswordEmailCount: resetCount,
       resetPasswordLastSent: now,
     })
     .where(eq(users.id, user.id));
 
-  //TODO: Send reset email with token
+  await sendResetPasswordEmail(
+    user.email,
+    resetCode,
+    codeExpiry.getTime() - now.getTime(),
+  );
 
   return {
     message:
@@ -179,11 +190,11 @@ export const recoveryPassword = async (email: string) => {
 };
 
 export const resetPassword = async (
-  token: string,
+  code: string,
   newPassword: string,
   confirmPassword: string,
 ) => {
-  if (!token || !newPassword || !confirmPassword) {
+  if (!code || !newPassword || !confirmPassword) {
     throw new Error("All fields are required");
   }
 
@@ -192,25 +203,25 @@ export const resetPassword = async (
   }
 
   const user = await db.query.users.findFirst({
-    where: (user, { eq }) => eq(user.resetPasswordToken, token),
+    where: (user, { eq }) => eq(user.resetPasswordCode, code),
   });
 
-  if (!user) throw new Error("Invalid token");
-  if (
-    user.resetPasswordTokenExpiry &&
-    new Date() > new Date(user.resetPasswordTokenExpiry)
-  ) {
-    throw new Error("Token has expired");
-  }
+  if (!user) throw new Error("Invalid or expired code");
 
-  if (newPassword.length < 8) {
-    throw new Error("Password must be at least 8 characters");
+  if (
+    user.resetPasswordCodeExpiry &&
+    isResetPasswordCodeExpired(user.resetPasswordCodeExpiry)
+  ) {
+    throw new Error("Reset code has expired");
   }
 
   const isSamePassword = await comparePassword(newPassword, user.password);
-
   if (isSamePassword) {
     throw new Error("New password must be different from old password");
+  }
+
+  if (newPassword.length < 8) {
+    throw new Error("Password must be at least 8 characters long");
   }
 
   const hashedPassword = await hashPassword(newPassword);
@@ -219,14 +230,14 @@ export const resetPassword = async (
     .update(users)
     .set({
       password: hashedPassword,
-      resetPasswordToken: null,
-      resetPasswordTokenExpiry: null,
+      resetPasswordCode: null,
+      resetPasswordCodeExpiry: null,
       resetPasswordEmailCount: 0,
       resetPasswordLastSent: null,
     })
     .where(eq(users.id, user.id));
 
-  //TODO: Send password reset confirmation email
+  await sendSuccessResetPasswordEmail(user.email);
 
   return {
     message: "Password reset successful",
