@@ -1,11 +1,10 @@
 import {
   pgTable,
-  text,
   timestamp,
   uuid,
   index,
-  integer,
   pgEnum,
+  numeric,
 } from "drizzle-orm/pg-core";
 
 import { users } from "./user.model";
@@ -29,7 +28,7 @@ export const orders = pgTable(
       .notNull()
       .references(() => customers.id),
 
-    total: integer("total").notNull(),
+    total: numeric("total", { precision: 12, scale: 2 }).notNull(),
 
     payment_method: PaymentMethod("payment_method").notNull(),
 

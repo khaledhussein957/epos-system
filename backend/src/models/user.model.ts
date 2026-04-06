@@ -1,4 +1,12 @@
-import { pgTable, text, timestamp, uuid, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  pgEnum,
+  boolean,
+  integer,
+} from "drizzle-orm/pg-core";
 
 export const UserRole = pgEnum("user_role", ["admin", "cashier", "customer"]);
 
@@ -13,6 +21,14 @@ export const users = pgTable("users", {
   role: UserRole("role").notNull(),
 
   profilePicture: text("profile_picture"),
+
+  isBlock: boolean("is_block").default(false).notNull(),
+  lastLogin: timestamp("last_login"),
+
+  resetPasswordToken: text("reset_password_token"),
+  resetPasswordTokenExpiry: timestamp("reset_password_token_expiry"),
+
+  resetPasswordEmailCount: integer("reset_password_email_count").default(0).notNull(),  resetPasswordLastSent: timestamp("reset_password_last_sent"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
