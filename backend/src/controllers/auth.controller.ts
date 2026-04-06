@@ -26,9 +26,9 @@ export const registerAccount = async (req: Request, res: Response) => {
       });
     }
 
-    const { name, email, password, phone, role } = parsed.data;
+    const { name, email, password, phone } = parsed.data;
 
-    const result = await registerUser(name, email, password, phone, role);
+    const result = await registerUser(name, email, password, phone);
 
     res.json(result);
   } catch (error: any) {

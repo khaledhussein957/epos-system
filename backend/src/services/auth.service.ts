@@ -107,7 +107,7 @@ export const loginUser = async (email: string, password: string) => {
       phone: user.phone,
       role: user.role,
       isBlock: user.isBlock,
-      lastLogin: user.lastLogin,
+      lastLogin: now,
       profilePicture: user.profilePicture,
     },
   };
@@ -221,7 +221,7 @@ export const resetPassword = async (
       password: hashedPassword,
       resetPasswordToken: null,
       resetPasswordTokenExpiry: null,
-      resetPasswordEmailCount: null,
+      resetPasswordEmailCount: 0,
       resetPasswordLastSent: null,
     })
     .where(eq(users.id, user.id));
