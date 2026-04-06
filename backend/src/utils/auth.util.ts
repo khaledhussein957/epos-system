@@ -29,6 +29,15 @@ export const verifyToken = (token: string) => {
   return jwt.verify(token, ENV.JWT_SECRET as string);
 };
 
-export const generateResetToken = () => {
-  return crypto.randomBytes(32).toString("hex");
-}
+export const generateResetPasswordCode = async (): Promise<string> => {
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  return code;
+};
+
+export const resetPasswordCodeExpiration = (minutes: number): Date => {
+  return new Date(Date.now() + minutes * 60 * 1000); // current time + minutes in milliseconds
+};
+
+export const isResetPasswordCodeExpired = (expirationDate: Date): boolean => {
+  return new Date() > expirationDate;
+};

@@ -74,18 +74,24 @@ export const recoverPasswordAccount = async (req: Request, res: Response) => {
 
     const { email } = parsed.data;
 
-    await recoveryPassword(email);
+    await recoveryPassword(email); // will throw if user does not exist
 
     res.json({
-      message: "Password recovery email sent if the email is registered.",
+      message: "Password recovery email sent.",
     });
-  } catch (error: unknown) {
-    // Log the error server-side but return generic message to prevent enumeration
-    console.error("Error in recovery password account:", error);
-    res.json({
-      message: "Password recovery email sent if the email is registered.",
+  } catch (error: any) {
+    console.log("Error in recovery password account:", error);
+
+    // If user does not exist, return 404
+    if (error.message === "User does not exist") {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(500).json({
+      message: error.message || "Password recovery failed",
     });
-  }};
+  }
+};
 
 export const resetPasswordAccount = async (req: Request, res: Response) => {
   try {
@@ -97,22 +103,12 @@ export const resetPasswordAccount = async (req: Request, res: Response) => {
       });
     }
 
-    const { newPassword, confirmPassword } = parsed.data;
+    const { newPassword, confirmPassword, code } = parsed.data;
 
-    const token = Array.isArray(req.params.token)
-      ? req.params.token[0]
-      : req.params.token;
-
-    if (!token) {
-      return res.status(400).json({
-        message: "Password reset token is required",
-      });
-    }
-
-    await resetPassword(token as string, newPassword, confirmPassword);
+    await resetPassword(code, newPassword, confirmPassword);
 
     res.json({
-      message: "Password reset successful",
+      message:  "Password reset successful",
     });
   } catch (error: any) {
     console.log("❌ Error in reset password account:", error);

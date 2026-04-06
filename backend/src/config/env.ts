@@ -14,6 +14,7 @@ export const ENV = {
     }
     return "dev_jwt_secret_not_for_production";
   })(),
+  
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || "",
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || "",
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || "",

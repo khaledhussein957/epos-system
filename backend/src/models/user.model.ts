@@ -25,8 +25,8 @@ export const users = pgTable("users", {
   isBlock: boolean("is_block").default(false).notNull(),
   lastLogin: timestamp("last_login"),
 
-  resetPasswordToken: text("reset_password_token"),
-  resetPasswordTokenExpiry: timestamp("reset_password_token_expiry"),
+  resetPasswordCode: text("reset_password_code"),
+  resetPasswordCodeExpiry: timestamp("reset_password_code_expiry"),
 
   resetPasswordEmailCount: integer("reset_password_email_count").default(0).notNull(),  resetPasswordLastSent: timestamp("reset_password_last_sent"),
 

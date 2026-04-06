@@ -24,6 +24,7 @@ export const forgotPasswordSchema = zod.object({
 
 export const resetPasswordSchema = zod
   .object({
+    code: zod.string().min(1, "Reset code is required").max(6, "Invalid code"),
     newPassword: zod
       .string()
       .min(8, "Password must be at least 8 characters long")
