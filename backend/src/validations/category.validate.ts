@@ -9,5 +9,5 @@ export const updateCategorySchema = zod.object({
 });
 
 export const deleteCategorySchema = zod.object({
-  password: zod.string().min(1, "Password is required"),
+  password: zod.string().min(8, "Password must be at least 8 characters long"),
 });

@@ -1,5 +1,5 @@
 import type { Response } from "express";
-import { eq, ne } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { unlink } from "fs/promises";
 
 import { db } from "../config/db";
@@ -105,11 +105,20 @@ export const updateCategory = async (req: AuthRequest, res: Response) => {
 
     const existingCategory = await db.query.categories.findFirst({
       where: (categories) =>
-        eq(categories.name, name as string) &&
-        ne(categories.id, categoryId as string),
+        and(
+          eq(categories.name, name as string),
+          ne(categories.id, categoryId as string),
+        ),
     });
     if (existingCategory) {
       return res.status(400).json({ message: "Category name already exists" });
+    }
+
+    const category = await db.query.categories.findFirst({
+      where: (categories) => eq(categories.id, categoryId as string),
+    });
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
     }
 
     const updatedCategory = await db
@@ -165,6 +174,13 @@ export const deleteCategory = async (req: AuthRequest, res: Response) => {
     const isPasswordValid = await comparePassword(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid password" });
+    }
+
+    const category = await db.query.categories.findFirst({
+      where: (categories) => eq(categories.id, categoryId as string),
+    });
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
     }
 
     await db
