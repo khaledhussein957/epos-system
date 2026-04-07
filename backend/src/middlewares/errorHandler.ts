@@ -8,8 +8,7 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction,
 ) => {
-  console.log("Error:", err.message);
-
+  console.error("Error:", err.message);
   const statusCode = res.statusCode >= 400 ? res.statusCode : 500;
   const isProduction = ENV.NODE_ENV === "production";
   const message =

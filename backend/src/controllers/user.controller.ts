@@ -1,5 +1,6 @@
 import type { Response } from "express";
 import { eq, ne } from "drizzle-orm";
+import { unlink } from "fs/promises";
 
 import { db } from "../config/db";
 import cloudinary from "../config/cloudinary.ts";
@@ -192,6 +193,13 @@ export const uploadProfileImage = async (req: AuthRequest, res: Response) => {
       overwrite: true,
     });
 
+    // clean up local file after upload
+    try {
+      await unlink(req.file.path);
+    } catch (error) {
+      console.error("Error deleting local file:", error);
+    }
+
     await db
       .update(userTable)
       .set({ profilePicture: result.secure_url })
@@ -224,6 +232,16 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     }
 
     const { name, email, phone } = bodyValidation.data;
+
+    if (email) {
+      const existingUser = await db.query.users.findFirst({
+        where: (users) =>
+          eq(users.email, email) && ne(users.id, userId),
+      });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already in use" });
+      }
+    }
 
     await db
       .update(userTable)
@@ -278,6 +296,16 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     }
 
     const { name, email, phone } = bodyValidation.data;
+
+    if (email) {
+      const existingUser = await db.query.users.findFirst({
+        where: (users) =>
+          eq(users.email, email) && ne(users.id, targetUserId as string),
+      });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already in use" });
+      }
+    }
 
     await db
       .update(userTable)

@@ -8,9 +8,8 @@ export const updateProfileSchema = zod.object({
   email: zod.string().email("Invalid email address").optional(),
   phone: zod
     .string()
-    .min(9, "Phone number must be at least 9 digits long")
-    .optional(),
-});
+    .min(9, "Phone number must be at least 9 characters long")
+    .optional(),});
 
 export const updateUserProfileSchema = zod.object({
   name: zod
