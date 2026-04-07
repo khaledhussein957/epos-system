@@ -3,9 +3,10 @@ import cors from "cors";
 
 import { ENV } from "./config/env";
 
-import { errorHandler } from "./middleware/errorHandler.ts";
+import { errorHandler } from "./middlewares/errorHandler.ts";
 
 import authRouter from "./routes/auth.route";
+import userRoute from "./routes/user.route";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.get("/health", (_, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/users", userRoute);
 
 app.use(errorHandler);
 
