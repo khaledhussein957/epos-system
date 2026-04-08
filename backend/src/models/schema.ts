@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import { users, UserRole } from "./user.model";
-import { products, categories } from "./product.model";
+import { products } from "./product.model";
+import { categories } from "./category.model";
 import { orders } from "./orders.model";
 import { orderItems } from "./orderItems.model";
 import { customers } from "./customers.model";

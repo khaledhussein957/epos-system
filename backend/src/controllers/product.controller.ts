@@ -7,8 +7,10 @@ import cloudinary from "../config/cloudinary.ts";
 
 import {
   products as productTable,
-  categories as categoryTable,
 } from "../models/product.model";
+import {
+  categories as categoryTable,
+} from "../models/category.model.ts";
 
 import { type AuthRequest } from "../middlewares/protectRoute.middleware";
 
@@ -137,6 +139,10 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
+    if (req.user?.role !== "admin") {
+      return res.status(403).json({ message: "Admins only" });
+    }
+
     const productId = req.params.id;
 
     const bodyValidation = updateProductSchema.safeParse(req.body);
@@ -214,6 +220,10 @@ export const uploadProductImage = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
+    if (req.user?.role !== "admin") {
+      return res.status(403).json({ message: "Admins only" });
+    }
+
     const productId = req.params.id;
 
     const product = await db.query.products.findFirst({
@@ -231,14 +241,7 @@ export const uploadProductImage = async (req: AuthRequest, res: Response) => {
     // delete previous avatar from Cloudinary (non-blocking)
     if (product.image_url) {
       try {
-        const publicId = product.image_url
-          .split("/")
-          .slice(-2)
-          .join("/")
-          .split(".")[0];
-        if (publicId) {
-          await cloudinary.uploader.destroy(publicId);
-        }
+        await cloudinary.uploader.destroy(product.image_public_id!);
       } catch (error) {
         console.error("Error deleting previous avatar:", error);
       }
@@ -246,6 +249,7 @@ export const uploadProductImage = async (req: AuthRequest, res: Response) => {
 
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: "products",
+      public_id: `${product.id}_${Date.now()}`,
     });
 
     // clean up local file after upload
@@ -257,7 +261,7 @@ export const uploadProductImage = async (req: AuthRequest, res: Response) => {
 
     await db
       .update(productTable)
-      .set({ image_url: result.secure_url })
+      .set({ image_url: result.secure_url, image_public_id: result.public_id })
       .where(eq(productTable.id, productId as string));
 
     return res.status(200).json({ message: "Image uploaded successfully" });
@@ -322,11 +326,7 @@ export const deleteProduct = async (req: AuthRequest, res: Response) => {
     // 🖼️ Delete image from Cloudinary
     if (product.image_url) {
       try {
-        const publicId = product.image_url.split("/").pop()?.split(".")[0];
-
-        if (publicId) {
-          await cloudinary.uploader.destroy(publicId);
-        }
+        await cloudinary.uploader.destroy(product.image_public_id!);
       } catch (error) {
         console.error("Error deleting image from Cloudinary:", error);
       }

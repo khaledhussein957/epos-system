@@ -10,15 +10,8 @@ import {
   decimal,
 } from "drizzle-orm/pg-core";
 
-export const categories = pgTable("categories", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  name: text("name").notNull(),
-  created_at: timestamp("created_at").defaultNow().notNull(),
-  updated_at: timestamp("updated_at")
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
+import { categories } from "./category.model";
+
 
 export const products = pgTable(
   "products",
@@ -35,6 +28,7 @@ export const products = pgTable(
     stock: integer("stock").notNull(),
     is_active: boolean("is_active").default(true).notNull(),
     image_url: text("image_url"),
+    image_public_id: text("image_public_id"),
     qr_code: text("qr_code").notNull(),
 
     created_at: timestamp("created_at").defaultNow().notNull(),
