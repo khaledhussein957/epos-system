@@ -21,6 +21,7 @@ export const users = pgTable("users", {
   role: UserRole("role").notNull(),
 
   profilePicture: text("profile_picture"),
+  profilePublicId: text("profile_public_id"),
 
   isBlock: boolean("is_block").default(false).notNull(),
   lastLogin: timestamp("last_login"),
