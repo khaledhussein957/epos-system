@@ -6,7 +6,7 @@ import { db } from "../config/db";
 import cloudinary from "../config/cloudinary.ts";
 
 import { users as userTable } from "../models/user.model";
-import { categories as categoryTable } from "../models/category.model";
+import { categories as categoryTable } from "../models/product.model.ts";
 
 import { type AuthRequest } from "../middlewares/protectRoute.middleware";
 
