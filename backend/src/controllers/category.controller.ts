@@ -1,23 +1,26 @@
 import type { Response } from "express";
-import { and, eq, ne } from "drizzle-orm";
-import { unlink } from "fs/promises";
+import { eq } from "drizzle-orm";
 
 import { db } from "../config/db";
-import cloudinary from "../config/cloudinary.ts";
-
-import { users as userTable } from "../models/user.model";
 import { categories as categoryTable } from "../models/category.model";
 
 import { type AuthRequest } from "../middlewares/protectRoute.middleware";
 
 import { formatZodError } from "../utils/validation.util";
+import { comparePassword } from "../utils/auth.util.ts";
 
 import {
   createCategorySchema,
   updateCategorySchema,
   deleteCategorySchema,
 } from "../validations/category.validate";
-import { comparePassword } from "../utils/auth.util.ts";
+
+import {
+  delete_Category,
+  create_Category,
+  get_AllCategories,
+  update_Category,
+} from "../services/category.service.ts";
 
 export const createCategory = async (req: AuthRequest, res: Response) => {
   try {
@@ -44,22 +47,9 @@ export const createCategory = async (req: AuthRequest, res: Response) => {
 
     const { name } = bodyValidation.data;
 
-    const existingCategory = await db.query.categories.findFirst({
-      where: (categories) => eq(categories.name, name),
-    });
-    if (existingCategory) {
-      return res.status(400).json({ message: "Category name already exists" });
-    }
-
-    const newCategory = await db
-      .insert(categoryTable)
-      .values({ name })
-      .returning();
-
-    res.status(201).json({
-      message: "Category created successfully",
-      category: newCategory[0],
-    });
+    const newCategory = await create_Category(name as string);
+    
+    res.status(201).json({ category: newCategory });
   } catch (error) {
     console.error("Error creating category:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -68,7 +58,7 @@ export const createCategory = async (req: AuthRequest, res: Response) => {
 
 export const getCategories = async (req: AuthRequest, res: Response) => {
   try {
-    const categories = await db.query.categories.findMany();
+    const categories = await get_AllCategories();
     res.status(200).json({ categories });
   } catch (error) {
     console.error("Error getting categories:", error);
@@ -103,33 +93,14 @@ export const updateCategory = async (req: AuthRequest, res: Response) => {
 
     const { name } = bodyValidation.data;
 
-    const existingCategory = await db.query.categories.findFirst({
-      where: (categories) =>
-        and(
-          eq(categories.name, name as string),
-          ne(categories.id, categoryId as string),
-        ),
-    });
-    if (existingCategory) {
-      return res.status(400).json({ message: "Category name already exists" });
-    }
-
-    const category = await db.query.categories.findFirst({
-      where: (categories) => eq(categories.id, categoryId as string),
-    });
-    if (!category) {
-      return res.status(404).json({ message: "Category not found" });
-    }
-
-    const updatedCategory = await db
-      .update(categoryTable)
-      .set({ name })
-      .where(eq(categoryTable.id, categoryId as string))
-      .returning();
+    const updatedCategory = await update_Category(
+      categoryId as string,
+      name as string,
+    );
 
     res.status(200).json({
       message: "Category updated successfully",
-      category: updatedCategory[0],
+      category: updatedCategory,
     });
   } catch (error) {
     console.error("Error updating category:", error);
@@ -176,16 +147,7 @@ export const deleteCategory = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: "Invalid password" });
     }
 
-    const category = await db.query.categories.findFirst({
-      where: (categories) => eq(categories.id, categoryId as string),
-    });
-    if (!category) {
-      return res.status(404).json({ message: "Category not found" });
-    }
-
-    await db
-      .delete(categoryTable)
-      .where(eq(categoryTable.id, categoryId as string));
+    await delete_Category(categoryId as string);
 
     res.status(200).json({ message: "Category deleted successfully" });
   } catch (error) {
