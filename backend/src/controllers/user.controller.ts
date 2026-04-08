@@ -117,7 +117,7 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
         .json({ message: formatZodError(bodyValidation.error) });
     }
 
-    const { oldPassword, password } = bodyValidation.data;
+    const { oldPassword, password, confirmPassword } = bodyValidation.data;
 
     // Fetch user only when we actually need the stored password hash
     const user = await db.query.users.findFirst({
@@ -125,6 +125,10 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
     }
 
     const isCurrentPasswordValid = await comparePassword(
@@ -171,17 +175,10 @@ export const uploadProfileImage = async (req: AuthRequest, res: Response) => {
     }
 
     // Delete previous avatar from Cloudinary (non-blocking)
-    if (user.profilePicture) {
+    if (user.profilePublicId) {
       try {
-        const publicId = user.profilePicture
-          .split("/")
-          .slice(-2)
-          .join("/")
-          .split(".")[0];
-        if (publicId) {
-          await cloudinary.uploader.destroy(publicId);
-          console.log("✅ Old avatar destroyed:", publicId);
-        }
+        await cloudinary.uploader.destroy(user.profilePublicId);
+        console.log("✅ Old avatar destroyed:", user.profilePublicId);
       } catch (error) {
         console.log(`❌ Error destroying old avatar: ${error}`);
       }
@@ -190,7 +187,7 @@ export const uploadProfileImage = async (req: AuthRequest, res: Response) => {
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: "profile_images",
       public_id: `${userId}_${Date.now()}`,
-      overwrite: true,
+      resource_type: "image",
     });
 
     // clean up local file after upload
@@ -202,7 +199,10 @@ export const uploadProfileImage = async (req: AuthRequest, res: Response) => {
 
     await db
       .update(userTable)
-      .set({ profilePicture: result.secure_url })
+      .set({
+        profilePicture: result.secure_url,
+        profilePublicId: result.public_id,
+      })
       .where(eq(userTable.id, userId));
 
     return res.status(200).json({
@@ -235,8 +235,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
 
     if (email) {
       const existingUser = await db.query.users.findFirst({
-        where: (users) =>
-          eq(users.email, email) && ne(users.id, userId),
+        where: (users) => eq(users.email, email) && ne(users.id, userId),
       });
       if (existingUser) {
         return res.status(400).json({ message: "Email already in use" });
@@ -443,13 +442,6 @@ export const deleteAccount = async (req: AuthRequest, res: Response) => {
       return res
         .status(401)
         .json({ message: "Unauthorized: Incorrect password" });
-    }
-
-    // Prevent admins from self-deleting via this endpoint
-    if (user.role === "admin") {
-      return res
-        .status(403)
-        .json({ message: "Admin accounts cannot be self-deleted" });
     }
 
     // Delete avatar from Cloudinary (non-blocking)
