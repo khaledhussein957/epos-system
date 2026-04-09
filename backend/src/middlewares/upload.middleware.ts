@@ -32,3 +32,18 @@ export const uploadProfile = multer({
     }
   },
 });
+
+export const uploadProduct = multer({
+  storage: createStorage("product-images"),
+  limits: {
+    fileSize: 1024 * 1024 * 5, // 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid file type. Only JPEG, PNG, and GIF files are allowed."));
+    }
+  },
+});

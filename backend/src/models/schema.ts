@@ -20,17 +20,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
 }));
 
-export const productsRelations = relations(products, ({ one }) => ({
-  category: one(categories, {
-    fields: [products.category_id],
-    references: [categories.id],
-  }),
-}));
-
-export const categoriesRelations = relations(categories, ({ many }) => ({
-  products: many(products),
-}));
-
 export const ordersRelations = relations(orders, ({ one, many }) => ({
   user: one(users, {
     fields: [orders.user_id],

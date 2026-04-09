@@ -7,6 +7,8 @@ import { errorHandler } from "./middlewares/errorHandler.ts";
 
 import authRouter from "./routes/auth.route";
 import userRoute from "./routes/user.route";
+import categoryRoute from "./routes/category.route";
+import productRoute from "./routes/product.route";
 
 const app = express();
 
@@ -25,6 +27,8 @@ app.get("/health", (_, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRoute);
+app.use("/api/categories", categoryRoute);
+app.use("/api/products", productRoute);
 
 app.use(errorHandler);
 
