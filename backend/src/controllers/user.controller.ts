@@ -1,16 +1,13 @@
 import type { Response } from "express";
 import { eq, ne } from "drizzle-orm";
-import { unlink } from "fs/promises";
 
 import { db } from "../config/db";
-import cloudinary from "../config/cloudinary.ts";
 
 import { users as userTable } from "../models/user.model";
 
 import { type AuthRequest } from "../middlewares/protectRoute.middleware";
 
 import { formatZodError } from "../utils/validation.util";
-import { comparePassword, hashPassword } from "../utils/auth.util";
 
 import {
   changePasswordSchema,
@@ -19,6 +16,16 @@ import {
   updateProfileSchema,
   updateUserProfileSchema,
 } from "../validations/user.validate.ts";
+
+import {
+  change_password,
+  delete_account,
+  delete_user,
+  get_all_users,
+  toggle_block_user,
+  update_profile,
+  upload_profile_image,
+} from "../services/user.service";
 
 export const getAllUsers = async (req: AuthRequest, res: Response) => {
   try {
@@ -35,14 +42,7 @@ export const getAllUsers = async (req: AuthRequest, res: Response) => {
         .json({ message: "Unauthorized: User is not an admin" });
     }
 
-    const users = await db.query.users.findMany({
-      where: (users) => ne(users.id, userId),
-      columns: {
-        password: false,
-        resetPasswordToken: false,
-        resetPasswordTokenExpiry: false,
-      },
-    });
+    const users = await get_all_users(userId);
 
     return res.status(200).json({ users });
   } catch (error) {
@@ -69,30 +69,9 @@ export const toggleBlockUser = async (req: AuthRequest, res: Response) => {
 
     const { targetUserId } = req.params;
 
-    if (targetUserId === userId) {
-      return res.status(403).json({
-        message: "You cannot block yourself",
-      });
-    }
+    const result = await toggle_block_user(userId, targetUserId as string);
 
-    const targetUser = await db.query.users.findFirst({
-      where: (users) => eq(users.id, targetUserId as string),
-    });
-    if (!targetUser) {
-      return res.status(404).json({ message: "Target user not found" });
-    }
-
-    const newBlockStatus = !targetUser.isBlock;
-
-    await db
-      .update(userTable)
-      .set({ isBlock: newBlockStatus })
-      .where(eq(userTable.id, targetUserId as string));
-
-    return res.status(200).json({
-      message: `User has been ${newBlockStatus ? "blocked" : "unblocked"} successfully`,
-      isBlock: newBlockStatus,
-    });
+    return res.status(200).json(result);
   } catch (error) {
     console.error("Toggle Block User error:", error);
     return res.status(500).json({
@@ -119,34 +98,14 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
 
     const { oldPassword, password, confirmPassword } = bodyValidation.data;
 
-    // Fetch user only when we actually need the stored password hash
-    const user = await db.query.users.findFirst({
-      where: (users) => eq(users.id, userId),
-    });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
-    }
-
-    const isCurrentPasswordValid = await comparePassword(
+    const result = await change_password(
+      userId,
       oldPassword,
-      user.password,
+      password,
+      confirmPassword,
     );
-    if (!isCurrentPasswordValid) {
-      return res.status(401).json({ message: "Invalid current password" });
-    }
 
-    const hashedPassword = await hashPassword(password);
-
-    await db
-      .update(userTable)
-      .set({ password: hashedPassword })
-      .where(eq(userTable.id, userId));
-
-    return res.status(200).json({ message: "Password changed successfully" });
+    return res.status(200).json(result);
   } catch (error) {
     console.error("Change Password error:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -166,49 +125,9 @@ export const uploadProfileImage = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    // Fetch user to get the existing profilePicture URL
-    const user = await db.query.users.findFirst({
-      where: (users) => eq(users.id, userId),
-    });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const result = await upload_profile_image(userId, req.file.path);
 
-    // Delete previous avatar from Cloudinary (non-blocking)
-    if (user.profilePublicId) {
-      try {
-        await cloudinary.uploader.destroy(user.profilePublicId);
-        console.log("✅ Old avatar destroyed:", user.profilePublicId);
-      } catch (error) {
-        console.log(`❌ Error destroying old avatar: ${error}`);
-      }
-    }
-
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "profile_images",
-      public_id: `${userId}_${Date.now()}`,
-      resource_type: "image",
-    });
-
-    // clean up local file after upload
-    try {
-      await unlink(req.file.path);
-    } catch (error) {
-      console.error("Error deleting local file:", error);
-    }
-
-    await db
-      .update(userTable)
-      .set({
-        profilePicture: result.secure_url,
-        profilePublicId: result.public_id,
-      })
-      .where(eq(userTable.id, userId));
-
-    return res.status(200).json({
-      message: "Profile image uploaded successfully",
-      profilePicture: result.secure_url,
-    });
+    return res.status(200).json(result);
   } catch (error) {
     console.error("Upload Profile Image error:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -233,21 +152,9 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
 
     const { name, email, phone } = bodyValidation.data;
 
-    if (email) {
-      const existingUser = await db.query.users.findFirst({
-        where: (users) => eq(users.email, email) && ne(users.id, userId),
-      });
-      if (existingUser) {
-        return res.status(400).json({ message: "Email already in use" });
-      }
-    }
+    const result = await update_profile(userId, email!, name!, phone!);
 
-    await db
-      .update(userTable)
-      .set({ name, email, phone })
-      .where(eq(userTable.id, userId));
-
-    return res.status(200).json({ message: "Profile updated successfully" });
+    return res.status(200).json(result);
   } catch (error) {
     console.error("Update Profile error:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -337,30 +244,6 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     }
 
     const { targetUserId } = req.params;
-    if (!targetUserId) {
-      return res.status(400).json({ message: "Target user ID is required" });
-    }
-
-    // Admins cannot delete themselves via this endpoint
-    if (targetUserId === userId) {
-      return res
-        .status(403)
-        .json({ message: "Admins cannot delete their own account" });
-    }
-
-    const targetUser = await db.query.users.findFirst({
-      where: (users) => eq(users.id, targetUserId as string),
-    });
-    if (!targetUser) {
-      return res.status(404).json({ message: "Target user not found" });
-    }
-
-    // Prevent deleting another admin account
-    if (targetUser.role === "admin") {
-      return res
-        .status(403)
-        .json({ message: "You cannot delete an admin account" });
-    }
 
     // Require the requesting admin's password as confirmation
     const bodyValidation = deleteUserSchema.safeParse(req.body);
@@ -372,39 +255,9 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
 
     const { password } = bodyValidation.data;
 
-    // Fetch the admin's own record to verify their password
-    const adminUser = await db.query.users.findFirst({
-      where: (users) => eq(users.id, userId),
-    });
-    if (!adminUser) {
-      return res.status(404).json({ message: "Admin user not found" });
-    }
+    const result = await delete_user(userId, targetUserId as string, password);
 
-    const isPasswordMatch = await comparePassword(password, adminUser.password);
-    if (!isPasswordMatch) {
-      return res.status(401).json({ message: "Invalid password" });
-    }
-
-    // Delete target user's avatar from Cloudinary (non-blocking)
-    if (targetUser.profilePicture) {
-      try {
-        const publicId = targetUser.profilePicture
-          .split("/")
-          .slice(-2)
-          .join("/")
-          .split(".")[0];
-        if (publicId) {
-          await cloudinary.uploader.destroy(publicId);
-          console.log("✅ Old avatar destroyed:", publicId);
-        }
-      } catch (error) {
-        console.log(`❌ Error destroying old avatar: ${error}`);
-      }
-    }
-
-    await db.delete(userTable).where(eq(userTable.id, targetUserId as string));
-
-    return res.status(200).json({ message: "User deleted successfully" });
+    return res.status(200).json(result);
   } catch (error) {
     console.error("Delete User error:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -429,41 +282,9 @@ export const deleteAccount = async (req: AuthRequest, res: Response) => {
 
     const { password } = bodyValidation.data;
 
-    // Fetch user to verify password and get profilePicture
-    const user = await db.query.users.findFirst({
-      where: (users) => eq(users.id, userId),
-    });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const result = await delete_account(userId, password);
 
-    const isPasswordValid = await comparePassword(password, user.password);
-    if (!isPasswordValid) {
-      return res
-        .status(401)
-        .json({ message: "Unauthorized: Incorrect password" });
-    }
-
-    // Delete avatar from Cloudinary (non-blocking)
-    if (user.profilePicture) {
-      try {
-        const publicId = user.profilePicture
-          .split("/")
-          .slice(-2)
-          .join("/")
-          .split(".")[0];
-        if (publicId) {
-          await cloudinary.uploader.destroy(publicId);
-          console.log("✅ Old avatar destroyed:", publicId);
-        }
-      } catch (error) {
-        console.log(`❌ Error destroying old avatar: ${error}`);
-      }
-    }
-
-    await db.delete(userTable).where(eq(userTable.id, userId));
-
-    return res.status(200).json({ message: "Account deleted successfully" });
+    return res.status(200).json(result);
   } catch (error) {
     console.error("Delete Account error:", error);
     return res.status(500).json({ message: "Internal server error" });
