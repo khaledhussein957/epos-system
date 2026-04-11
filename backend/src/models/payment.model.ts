@@ -1,4 +1,11 @@
-import { pgTable, timestamp, uuid, pgEnum, numeric } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  timestamp,
+  uuid,
+  pgEnum,
+  numeric,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 import { users } from "./user.model";
 import { orders } from "./orders.model";
@@ -30,9 +37,9 @@ export const payments = pgTable("payments", {
   paymentStatus: paymentStatusEnum("payment_status").notNull(),
 
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
-  phoneNo: numeric("phone_no", { precision: 15, scale: 0 }),
+  phoneNo: varchar("phone_no", { length: 32 }),
 
-  transactionId: numeric("transaction_id", { precision: 15, scale: 0 }),
+  transactionId: varchar("transaction_id", { length: 128 }),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")

@@ -6,13 +6,13 @@ export const stripe = new Stripe(ENV.STRIPE_SECRET_KEY);
 export const createPaymentIntent = async (
   amount: number,
   orderId: string,
-  currency: string = "USD",
+  currency: string = "usd",
 ) => {
   try {
     const paymentIntent = await stripe.paymentIntents.create({
       // Stripe expects amounts in cents
       amount: Math.round(amount * 100),
-      currency,
+      currency: currency.toLowerCase(),
       metadata: { orderId },
     });
 
