@@ -14,6 +14,7 @@ export const PaymentMethod = pgEnum("payment_method", [
   "cash",
   "card",
   "mobile",
+  "bank",
 ]);
 
 export const orders = pgTable(
@@ -24,9 +25,7 @@ export const orders = pgTable(
     user_id: uuid("user_id")
       .notNull()
       .references(() => users.id),
-    customer_id: uuid("customer_id")
-      .notNull()
-      .references(() => customers.id),
+    customer_id: uuid("customer_id").references(() => customers.id),
 
     total: numeric("total", { precision: 12, scale: 2 }).notNull(),
 
