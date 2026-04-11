@@ -51,6 +51,9 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       parsed.data;
 
     const image = req.file?.path;
+    if (!image) {
+      return res.status(400).json({ message: "Product image is required" });
+    }
 
     const category = await create_product(
       name,
