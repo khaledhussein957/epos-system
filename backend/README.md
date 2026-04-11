@@ -11,6 +11,7 @@ A robust and scalable backend for an Electronic Point of Sale (EPOS) system, bui
 - **Customer Management**: Automatic tracking and registration of customer records during checkout.
 - **Database Architecture**: High-performance PostgreSQL database managed via Drizzle ORM.
 - **Reliable Validation**: Request bodies and parameters validated using Zod.
+- **Payment Processing**: Full integration with Stripe (card payments) and WaafiPay (mobile & bank payments).
 - **File Storage**: Seamless integration with Cloudinary for product and profile images.
 - **Email Service**: Automated email notifications using Nodemailer (SMTP).
 - **PDF Receipts & QR Generation**: Built-in support for generating detailed transaction receipts (PDF) and QR codes.
@@ -25,6 +26,7 @@ A robust and scalable backend for an Electronic Point of Sale (EPOS) system, bui
 - **Validation**: [Zod](https://zod.dev/)
 - **Image Storage**: [Cloudinary](https://cloudinary.com/)
 - **Auth**: [JSON Web Tokens (JWT)](https://jwt.io/) & [bcryptjs](https://github.com/dcodeIO/bcrypt.js)
+- **Payments**: Stripe SDK & Axios (for WaafiPay integration)
 - **Email**: [Nodemailer](https://nodemailer.com/)
 - **Documentation**: README.md
 
@@ -145,6 +147,84 @@ backend/
 | Method | Endpoint | Description                             | Auth Required |
 | :----- | :------- | :-------------------------------------- | :------------ |
 | POST   | `/`      | Create a new order and generate receipt | ✅            |
+
+#### **Postman Testing Examples (POST `/api/orders/`)**
+
+You can selectively provide `customer_id`, `customer_info`, or neither depending on if this is an anonymous walk-in, a returning customer, or a new customer.
+
+**1. Using an Existing Customer ID (Card Payment)**
+
+```json
+{
+  "customer_id": "550e8400-e29b-41d4-a716-446655440000",
+  "payment_method": "card",
+  "items": [
+    {
+      "product_id": "111e8400-e29b-41d4-a716-446655440000",
+      "quantity": 2
+    },
+    {
+      "product_id": "222e8400-e29b-41d4-a716-446655440000",
+      "quantity": 1
+    }
+  ]
+}
+```
+
+**2. Creating a New Customer or Linking by Phone/Email (Card Payment)**
+
+```json
+{
+  "customer_info": {
+    "name": "Khalid Hussein",
+    "phone": "252616850294",
+    "email": "khalidhusseinsayid@gamil.com"
+  },
+  "payment_method": "card",
+  "items": [
+    {
+      "product_id": "111e8400-e29b-41d4-a716-446655440000",
+      "quantity": 1
+    }
+  ]
+}
+```
+
+**3. Mobile Payment (Requires `payment_account`)**
+
+```json
+{
+  "customer_info": {
+    "name": "Khalid Hussein",
+    "phone": "252616850294",
+    "email": "khalidhusseinsayid@gamil.com"
+  },
+  "payment_method": "mobile",
+  "payment_account": "252612345678",
+  "items": [
+    {
+      "product_id": "111e8400-e29b-41d4-a716-446655440000",
+      "quantity": 3
+    }
+  ]
+}
+```
+
+**4. Anonymous Walk-in Customer (Cash Payment)**
+
+> _Note: Both `customer_id` and `customer_info` are completely optional. Leaving them empty works perfectly for quick walk-in cash payments where no customer data is collected._
+
+```json
+{
+  "payment_method": "cash",
+  "items": [
+    {
+      "product_id": "111e8400-e29b-41d4-a716-446655440000",
+      "quantity": 1
+    }
+  ]
+}
+```
 
 ## 📜 Available Scripts
 
