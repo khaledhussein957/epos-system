@@ -7,11 +7,13 @@ A robust and scalable backend for an Electronic Point of Sale (EPOS) system, bui
 - **Authentication & Authorization**: Secure JWT-based authentication with password hashing using bcrypt.
 - **User Management**: Comprehensive CRUD for users, including profile management and image uploads.
 - **Product & Category Management**: Dynamic system for managing inventory with image uploads to Cloudinary.
+- **Order & Transaction Processing**: Robust, atomic transaction flow with real-time stock validation and management.
+- **Customer Management**: Automatic tracking and registration of customer records during checkout.
 - **Database Architecture**: High-performance PostgreSQL database managed via Drizzle ORM.
 - **Reliable Validation**: Request bodies and parameters validated using Zod.
 - **File Storage**: Seamless integration with Cloudinary for product and profile images.
 - **Email Service**: Automated email notifications using Nodemailer (SMTP).
-- **PDF & QR Generation**: Built-in support for generating invoices (PDF) and QR codes.
+- **PDF Receipts & QR Generation**: Built-in support for generating detailed transaction receipts (PDF) and QR codes.
 
 ## 🛠️ Technology Stack
 
@@ -137,6 +139,12 @@ backend/
 | POST   | `/`      | Create a new category | ✅            |
 | PUT    | `/:id`   | Update category       | ✅            |
 | DELETE | `/:id`   | Delete category       | ✅            |
+
+### 🛒 Order & Transaction Management (`/api/orders`)
+
+| Method | Endpoint | Description                             | Auth Required |
+| :----- | :------- | :-------------------------------------- | :------------ |
+| POST   | `/`      | Create a new order and generate receipt | ✅            |
 
 ## 📜 Available Scripts
 
