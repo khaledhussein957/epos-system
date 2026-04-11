@@ -5,13 +5,9 @@ import { unlink } from "fs/promises";
 import { db } from "../config/db";
 import cloudinary from "../config/cloudinary.ts";
 
-import { products as productTable } from "../models/product.model";
-import { categories as categoryTable } from "../models/category.model.ts";
-
 import { type AuthRequest } from "../middlewares/protectRoute.middleware";
 
 import { formatZodError } from "../utils/validation.util";
-import { generateProductQrCode } from "../utils/product.util.ts";
 
 import { comparePassword } from "../utils/auth.util.ts";
 import {
@@ -51,7 +47,13 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const { name, description, category_id, price, stock } = parsed.data;
+    const { name, description, category_id, price, stock, is_active } =
+      parsed.data;
+
+    const image = req.file?.path;
+    if (!image) {
+      return res.status(400).json({ message: "Product image is required" });
+    }
 
     const category = await create_product(
       name,
@@ -59,6 +61,8 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       category_id,
       price as any,
       stock,
+      is_active,
+      image,
     );
 
     return res.status(201).json({ category });

@@ -15,6 +15,8 @@ export const create_product = async (
   category_id: string,
   price: number,
   stock: number,
+  isActive: boolean,
+  productImage: any,
 ) => {
   // 📂 Check category exists
   const category = await db.query.categories.findFirst({
@@ -25,6 +27,18 @@ export const create_product = async (
     return {
       message: "Category not found",
     };
+  }
+
+  const UploadResult = await cloudinary.uploader.upload(productImage, {
+    folder: "product_images",
+    resource_type: "image",
+  });
+
+  // clean up local file after upload
+  try {
+    await unlink(productImage);
+  } catch (error) {
+    console.error("Error deleting local file:", error);
   }
 
   // 💾 Transaction (safe + consistent)
@@ -38,8 +52,9 @@ export const create_product = async (
         category_id,
         price: price.toString(),
         stock,
-        is_active: true,
-        image_url: "",
+        is_active: isActive,
+        image_url: UploadResult.secure_url,
+        image_public_id: UploadResult.public_id,
         qr_code: "", // ✅ placeholder
       })
       .returning();
