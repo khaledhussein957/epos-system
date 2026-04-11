@@ -9,7 +9,7 @@ export const createOrderSchema = z.object({
       email: z.string().email("Invalid email address"),
     })
     .optional(),
-  payment_method: z.enum(["cash", "card", "mobile"]),
+  payment_method: z.enum(["cash", "card", "mobile", "bank"]),
   items: z
     .array(
       z.object({
