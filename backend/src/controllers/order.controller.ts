@@ -7,6 +7,8 @@ import { processTransaction } from "../services/order.service";
 import { createOrderSchema } from "../validations/order.validate";
 
 import { generateReceipt } from "../utils/generatePDF.util";
+import { initiateWaafiPurchase } from "../utils/waafipay.util";
+import { createPaymentIntent } from "../utils/stripe.util";
 
 export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
@@ -36,10 +38,44 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
 
     const receiptUrl = await generateReceipt(receiptData);
 
+    let paymentData = {};
+
+    if (
+      validatedData.payment_method === "mobile" ||
+      validatedData.payment_method === "bank"
+    ) {
+      const waafiResponse = await initiateWaafiPurchase({
+        accountNo: validatedData.payment_account as string,
+        amount: parseFloat(order.total),
+        orderId: order.id,
+        paymentMethod:
+          validatedData.payment_method === "mobile"
+            ? "MWALLET_ACCOUNT"
+            : "MWALLET_BANKACCOUNT",
+      });
+
+      if (!waafiResponse.success) {
+        return res.status(400).json({
+          message: "WaafiPay payment failed",
+          details: waafiResponse.responseMsg,
+        });
+      }
+
+      paymentData = { transactionId: waafiResponse.transactionId };
+    } else if (validatedData.payment_method === "card") {
+      const stripeResponse = await createPaymentIntent(
+        parseFloat(order.total),
+        order.id,
+        "USD",
+      );
+      paymentData = { clientSecret: stripeResponse.clientSecret };
+    }
+
     return res.status(201).json({
       message: "Order created successfully",
       order,
       receiptUrl,
+      payment: paymentData,
     });
   } catch (error: any) {
     console.error("❌ Error creating order:", error);

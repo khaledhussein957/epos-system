@@ -10,6 +10,7 @@ export const createOrderSchema = z.object({
     })
     .optional(),
   payment_method: z.enum(["cash", "card", "mobile", "bank"]),
+  payment_account: z.string().optional().describe("Required for mobile or bank payments"),
   items: z
     .array(
       z.object({
@@ -18,6 +19,18 @@ export const createOrderSchema = z.object({
       })
     )
     .min(1, "At least one item is required"),
-});
+}).refine(
+  (data) => {
+    // If payment method is mobile or bank, payment_account is required
+    if (["mobile", "bank"].includes(data.payment_method)) {
+      return !!data.payment_account && data.payment_account.trim() !== "";
+    }
+    return true;
+  },
+  {
+    message: "payment_account is required for mobile and bank payments",
+    path: ["payment_account"], // path of error
+  }
+);
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
