@@ -12,6 +12,8 @@ export const createProductSchema = zod.object({
     .transform((val) => val.toString()), // ✅ fix
 
   stock: zod.number().int().nonnegative("Stock must be a non-negative integer"),
+
+  is_active: zod.boolean().default(true),
 });
 
 export const updateProductSchema = zod.object({
