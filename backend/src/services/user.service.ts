@@ -132,7 +132,7 @@ export const upload_profile_image = async (
     console.error("Error deleting local file:", error);
   }
 
-  await db
+  const updatedUser = await db
     .update(userTable)
     .set({
       profilePicture: result.secure_url,
@@ -142,7 +142,7 @@ export const upload_profile_image = async (
 
   return {
     message: "Profile image uploaded successfully",
-    profilePicture: result.secure_url,
+    updatedUser,
   };
 };
 
@@ -163,16 +163,14 @@ export const update_profile = async (
     }
   }
 
-  await db
+  const updatedUser = await db
     .update(userTable)
     .set({ name, email, phone })
     .where(eq(userTable.id, userId));
 
   return {
     message: "Profile updated successfully",
-    name,
-    email,
-    phone,
+    updatedUser,
   };
 };
 
