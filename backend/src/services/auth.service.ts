@@ -12,7 +12,7 @@ import {
   isResetPasswordCodeExpired,
   resetPasswordCodeExpiration,
 } from "../utils/auth.util";
-decodeURIComponent;
+
 import {
   sendResetPasswordEmail,
   sendSuccessResetPasswordEmail,
