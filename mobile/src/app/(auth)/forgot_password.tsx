@@ -123,7 +123,7 @@ const ForgotPasswordScreen = () => {
             {/* Footer */}
             <View className="flex-row justify-center mt-6">
               <Text className="text-sm text-black dark:text-white">
-                Remember your password?
+                Remember your password?{" "}
                 <Link href="/(auth)" className="text-primary font-semibold">
                   Login
                 </Link>

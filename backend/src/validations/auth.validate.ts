@@ -1,7 +1,7 @@
 import zod from "zod";
 
 export const registerSchema = zod.object({
-  name: zod.string().min(2, "Name is required"),
+  name: zod.string().min(2, "Name must be at least 2 characters"),
   email: zod.string().email("Invalid email address"),
   phone: zod.string().min(1, "Phone number is required"),
   password: zod

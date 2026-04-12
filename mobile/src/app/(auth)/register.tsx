@@ -91,7 +91,7 @@ const RegisterScreen = () => {
                     className="border border-primary rounded-xl px-4 py-3 text-black dark:text-white bg-white dark:bg-zinc-900"
                     placeholder="Enter your name"
                     placeholderTextColor="#999"
-                    autoCapitalize="none"
+                    autoCapitalize="words"
                     onBlur={onBlur}
                     onChangeText={onChange}
                     value={value}
@@ -105,7 +105,6 @@ const RegisterScreen = () => {
                 </Text>
               )}
             </View>
-
             {/* Email */}
             <View className="mb-5">
               <Text className="mb-1 text-sm font-medium text-black dark:text-white">
@@ -135,7 +134,6 @@ const RegisterScreen = () => {
                 </Text>
               )}
             </View>
-
             {/* Phone */}
             <View className="mb-5">
               <Text className="mb-1 text-sm font-medium text-black dark:text-white">
@@ -165,20 +163,19 @@ const RegisterScreen = () => {
                 </Text>
               )}
             </View>
-
             {/* Password */}
             <View className="mb-5">
               <Text className="mb-1 text-sm font-medium text-black dark:text-white">
                 Password
               </Text>
 
-              <View className="flex-row items-center border border-primary rounded-xl bg-white dark:bg-zinc-900">
+              <View className="flex-row items-center border border-primary rounded-xl bg-white dark:bg-zinc-900 px-3">
                 <Controller
                   control={control}
                   name="password"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <TextInput
-                      className="flex-1 px-4 py-3 text-black dark:text-white"
+                      className="flex-1 py-3 text-black dark:text-white"
                       placeholder="Enter your password"
                       placeholderTextColor="#999"
                       secureTextEntry={!showPassword}
@@ -190,7 +187,7 @@ const RegisterScreen = () => {
                 />
 
                 <TouchableOpacity
-                  className="px-3 py-3"
+                  className="px-2"
                   onPress={() => setShowPassword(!showPassword)}
                 >
                   <Ionicons
@@ -208,6 +205,7 @@ const RegisterScreen = () => {
               )}
             </View>
 
+            
             {/* Button */}
             <TouchableOpacity
               onPress={handleSubmit(onSubmit)}
@@ -222,16 +220,17 @@ const RegisterScreen = () => {
                 </Text>
               )}
             </TouchableOpacity>
-
             {/* Footer */}
             <View className="flex-row justify-center mt-6">
               <Text className="text-sm text-black dark:text-white">
-                Already have an account?
-                <Link href="/(auth)" className="text-primary font-semibold">
-                  Login
-                </Link>
+                Already have an account?{" "}
               </Text>
-            </View>
+              <Link href="/(auth)" asChild>
+                <Text className="text-sm text-primary font-semibold">
+                  Login
+                </Text>
+              </Link>
+            </View>{" "}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

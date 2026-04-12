@@ -25,6 +25,15 @@ const VerifyCodeScreen = () => {
   const router = useRouter();
   const { email } = useLocalSearchParams<{ email: string }>();
 
+  React.useEffect(() => {
+    if (!email) {
+      router.replace("/(auth)/forgot_password");
+    }
+  }, [email, router]);
+
+  if (!email) {
+    return null;
+  }
   const {
     control,
     handleSubmit,
@@ -104,11 +113,12 @@ const VerifyCodeScreen = () => {
 
           {/* BUTTON */}
           <TouchableOpacity
-            onPress={handleSubmit(onResendCode)}
+            onPress={() => resetPassword.mutate({ email })}
             className="bg-primary py-4 rounded-xl items-center"
+            disabled={resetPassword.isPending}
           >
             <Text className="text-primary-foreground font-semibold">
-              Resend Code
+              {resetPassword.isPending ? "Sending..." : "Resend Code"}
             </Text>
           </TouchableOpacity>
 

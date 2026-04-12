@@ -132,6 +132,8 @@ const LoginScreen = () => {
                 <TouchableOpacity
                   className="px-3 py-3"
                   onPress={() => setShowPassword(!showPassword)}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
                 >
                   <Ionicons
                     name={showPassword ? "eye-outline" : "eye-off-outline"}

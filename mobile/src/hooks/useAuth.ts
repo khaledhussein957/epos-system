@@ -49,9 +49,7 @@ export const useLogin = () => {
     mutationKey: ["auth", "login"],
     mutationFn: async (payload: LoginPayload) => {
       const { data } = await api.post<LoginResponse>("/auth/login", payload);
-      console.log(data);
-      return data;
-    },
+      return data;    },
     onSuccess: (data) => {
       setAuth(data.user, data.token);
       router.push("/(tabs)");
