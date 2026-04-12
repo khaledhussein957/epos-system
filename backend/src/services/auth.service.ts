@@ -190,11 +190,12 @@ export const recoveryPassword = async (email: string) => {
 };
 
 export const resetPassword = async (
+  email: string,
   code: string,
   newPassword: string,
   confirmPassword: string,
 ) => {
-  if (!code || !newPassword || !confirmPassword) {
+  if (!email || !code || !newPassword || !confirmPassword) {
     throw new Error("All fields are required");
   }
 
@@ -203,10 +204,15 @@ export const resetPassword = async (
   }
 
   const user = await db.query.users.findFirst({
-    where: (user, { eq }) => eq(user.resetPasswordCode, code),
+    where: (user, { eq }) => eq(user.email, email),
   });
+  if (!user) {
+    throw new Error("User does not exist");
+  }
 
-  if (!user) throw new Error("Invalid or expired code");
+  if (user.resetPasswordCode !== code) {
+    throw new Error("Invalid reset code");
+  }
 
   if (
     user.resetPasswordCodeExpiry &&

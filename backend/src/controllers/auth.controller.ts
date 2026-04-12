@@ -103,12 +103,12 @@ export const resetPasswordAccount = async (req: Request, res: Response) => {
       });
     }
 
-    const { newPassword, confirmPassword, code } = parsed.data;
+    const { newPassword, confirmPassword, code, email } = parsed.data;
 
-    await resetPassword(code, newPassword, confirmPassword);
+    await resetPassword(email, code, newPassword, confirmPassword);
 
     res.json({
-      message:  "Password reset successful",
+      message: "Password reset successful",
     });
   } catch (error: any) {
     console.log("❌ Error in reset password account:", error);

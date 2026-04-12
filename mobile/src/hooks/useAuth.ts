@@ -32,7 +32,7 @@ export const useRegister = () => {
     },
     onSuccess: (data) => {
       setAuth(data.user, data.token);
-      router.push("/");
+      router.push("/(tabs)");
     },
     onError: (error: AxiosError<{ message: string }>) => {
       Alert.alert("Error", error.response?.data.message);
@@ -49,11 +49,12 @@ export const useLogin = () => {
     mutationKey: ["auth", "login"],
     mutationFn: async (payload: LoginPayload) => {
       const { data } = await api.post<LoginResponse>("/auth/login", payload);
+      console.log(data);
       return data;
     },
     onSuccess: (data) => {
       setAuth(data.user, data.token);
-      router.push("/");
+      router.push("/(tabs)");
     },
     onError: (error: AxiosError<{ message: string }>) => {
       Alert.alert("Error", error.response?.data.message);
@@ -63,6 +64,7 @@ export const useLogin = () => {
 
 export const useRecoveryPassword = () => {
   const router = useRouter();
+
   return useMutation({
     mutationKey: ["auth", "recoveryPassword"],
     mutationFn: async (payload: recoveryPasswordPayload) => {
@@ -72,12 +74,16 @@ export const useRecoveryPassword = () => {
       );
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       Alert.alert(
         "Success",
-        "A password reset link has been sent to your email",
+        "A password reset code has been sent to your email",
       );
-      router.push("/reset-password");
+
+      router.push({
+        pathname: "/(auth)/verify_code",
+        params: { email: variables.email },
+      });
     },
     onError: (error: AxiosError<{ message: string }>) => {
       Alert.alert("Error", error.response?.data.message);
@@ -98,7 +104,7 @@ export const useResetPassword = () => {
     },
     onSuccess: () => {
       Alert.alert("Success", "Your password has been reset");
-      router.push("/login");
+      router.push("/(auth)");
     },
     onError: (error: AxiosError<{ message: string }>) => {
       Alert.alert("Error", error.response?.data.message);

@@ -24,7 +24,6 @@ export const forgotPasswordSchema = zod.object({
 
 export const resetPasswordSchema = zod
   .object({
-    email: zod.string().email("Invalid email address"),
     code: zod.string().min(1, "Reset code is required").max(6, "Invalid code"),
     newPassword: zod
       .string()
@@ -44,3 +43,18 @@ export const resetPasswordSchema = zod
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
+
+export const resendCode = zod.object({
+  email: zod.string().email("Invalid email address"),
+
+  code: zod
+    .string()
+    .min(1, "Reset code is required")
+    .max(6, "Invalid code"),
+});
+
+export type RegisterInput = zod.infer<typeof registerSchema>;
+export type LoginInput = zod.infer<typeof loginSchema>;
+export type ForgotPasswordInput = zod.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = zod.infer<typeof resetPasswordSchema>;
+export type ResendCodeInput = zod.infer<typeof resendCode>;

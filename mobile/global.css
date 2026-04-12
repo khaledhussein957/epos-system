@@ -1,3 +1,82 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* BACKGROUND / TEXT */
+    --background: 60 5% 15%; /* #262624 */
+    --foreground: 45 10% 75%; /* #c3c0b6 */
+
+    /* PRIMARY */
+    --primary: 18 65% 60%; /* #d97757 */
+    --primary-foreground: 0 0% 100%; /* #ffffff */
+
+    /* SECONDARY */
+    --secondary: 48 29% 96%; /* #faf9f5 */
+    --secondary-foreground: 60 5% 20%; /* #30302e */
+
+    /* ACCENT */
+    --accent: 60 5% 10%; /* #1a1915 */
+    --accent-foreground: 48 29% 96%; /* #f5f4ee */
+
+    /* CARD */
+    --card: 60 5% 15%; /* #262624 */
+    --card-foreground: 48 29% 96%; /* #faf9f5 */
+
+    /* POPOVER */
+    --popover: 60 5% 20%; /* #30302e */
+    --popover-foreground: 0 0% 90%; /* #e5e5e2 */
+
+    /* MUTED */
+    --muted: 60 5% 10%; /* #1b1b19 */
+    --muted-foreground: 50 10% 65%; /* #b7b5a9 */
+
+    /* BORDER / INPUT */
+    --border: 60 5% 25%; /* #3e3e38 */
+    --input: 60 5% 35%; /* #52514a */
+
+    /* RING */
+    --ring: 18 65% 60%; /* #d97757 */
+
+    /* DESTRUCTIVE */
+    --destructive: 0 84% 60%; /* #ef4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    /* OPTIONAL */
+    --radius: 0.5rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: 60 5% 15%; /* #262624 */
+      --foreground: 45 10% 75%; /* #c3c0b6 */
+
+      --primary: 18 65% 60%; /* #d97757 */
+      --primary-foreground: 0 0% 100%;
+
+      --secondary: 48 29% 96%;
+      --secondary-foreground: 60 5% 20%;
+
+      --accent: 60 5% 10%;
+      --accent-foreground: 48 29% 96%;
+
+      --card: 60 5% 15%;
+      --card-foreground: 48 29% 96%;
+
+      --popover: 60 5% 20%;
+      --popover-foreground: 0 0% 90%;
+
+      --muted: 60 5% 10%;
+      --muted-foreground: 50 10% 65%;
+
+      --border: 60 5% 25%;
+      --input: 60 5% 35%;
+
+      --ring: 18 65% 60%;
+
+      --destructive: 0 84% 60%;
+      --destructive-foreground: 0 0% 100%;
+    }
+  }
+}
