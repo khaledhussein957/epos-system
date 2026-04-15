@@ -32,10 +32,10 @@ export const protectRoute = async (
     }
 
     const token = authHeader.split(" ")[1];
-    if (!token) {
+    if (!token || token === "undefined" || token === "null") {
       return res
         .status(401)
-        .json({ message: "Unauthorized: No token provided" });
+        .json({ message: "Unauthorized: Invalid token provided" });
     }
     const decoded = verifyToken(token) as JwtPayloadCustom;
 
@@ -61,8 +61,10 @@ export const protectRoute = async (
     };
 
     next();
-  } catch (error) {
-    console.error(`❌ Error in protectRoute: ${error}`);
-    return res.status(500).json({ message: "Internal server error" });
+  } catch (error: any) {
+    console.error(`❌ Error in protectRoute: ${error.message}`);
+    return res
+      .status(500)
+      .json({ message: error.message || "Something went wrong" });
   }
 };

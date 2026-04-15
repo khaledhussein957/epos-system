@@ -37,6 +37,11 @@ export const createCategory = async (req: AuthRequest, res: Response) => {
         .json({ message: "Unauthorized: User is not an admin" });
     }
 
+    const image_url = req.file?.path;
+    if (!image_url) {
+      return res.status(400).json({ message: "Image is required" });
+    }
+
     const bodyValidation = createCategorySchema.safeParse(req.body);
     if (!bodyValidation.success) {
       const formattedErrors = formatZodError(bodyValidation.error);
@@ -47,8 +52,11 @@ export const createCategory = async (req: AuthRequest, res: Response) => {
 
     const { name } = bodyValidation.data;
 
-    const newCategory = await create_Category(name as string);
-    
+    const newCategory = await create_Category(
+      name as string,
+      image_url as string,
+    );
+
     res.status(201).json({ category: newCategory });
   } catch (error) {
     console.error("Error creating category:", error);
@@ -83,6 +91,11 @@ export const updateCategory = async (req: AuthRequest, res: Response) => {
 
     const categoryId = req.params.id;
 
+    const image_url = req.file?.path;
+    if (!image_url) {
+      return res.status(400).json({ message: "Image is required" });
+    }
+
     const bodyValidation = updateCategorySchema.safeParse(req.body);
     if (!bodyValidation.success) {
       const formattedErrors = formatZodError(bodyValidation.error);
@@ -96,6 +109,7 @@ export const updateCategory = async (req: AuthRequest, res: Response) => {
     const updatedCategory = await update_Category(
       categoryId as string,
       name as string,
+      image_url as string,
     );
 
     res.status(200).json({

@@ -17,7 +17,6 @@ const createStorage = (folder: string) =>
     },
   });
 
-
 export const uploadProfile = multer({
   storage: createStorage("profile-pictures"),
   limits: {
@@ -28,7 +27,11 @@ export const uploadProfile = multer({
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Invalid file type. Only JPEG, PNG, and GIF files are allowed."));
+      cb(
+        new Error(
+          "Invalid file type. Only JPEG, PNG, and GIF files are allowed.",
+        ),
+      );
     }
   },
 });
@@ -43,7 +46,30 @@ export const uploadProduct = multer({
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Invalid file type. Only JPEG, PNG, and GIF files are allowed."));
+      cb(
+        new Error(
+          "Invalid file type. Only JPEG, PNG, and GIF files are allowed.",
+        ),
+      );
+    }
+  },
+});
+
+export const uploadCategory = multer({
+  storage: createStorage("category-images"),
+  limits: {
+    fileSize: 1024 * 1024 * 5, // 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error(
+          "Invalid file type. Only JPEG, PNG, and GIF files are allowed.",
+        ),
+      );
     }
   },
 });

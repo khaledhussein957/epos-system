@@ -14,25 +14,28 @@ export interface IUser {
 }
 
 export interface ICategory {
-  id: number;
+  id: string;
   name: string;
+  image_url: string;
 }
 
 export interface IProduct {
-  id: number;
+  id: string;
 
   name: string;
   description: string;
 
-  category_id: number;
+  category_id: string;
 
-  price: number;
+  price: number | string;
   stock: number;
-  image: string;
+  image_url: string | null;
 
   is_active: boolean;
 
   qr_code: string;
+
+  category: ICategory;
 
   created_at: Date;
   updated_at: Date;
@@ -84,7 +87,7 @@ export interface IPayment {
   order_id: number;
 
   payment_status: string;
-  
+
   amount: number;
   phoneNo: string;
 

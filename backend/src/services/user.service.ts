@@ -13,8 +13,8 @@ export const get_all_users = async (userId: string) => {
     where: (users) => ne(users.id, userId),
     columns: {
       password: false,
-      resetPasswordToken: false,
-      resetPasswordTokenExpiry: false,
+      resetPasswordCode: false,
+      resetPasswordCodeExpiry: false,
     },
   });
 

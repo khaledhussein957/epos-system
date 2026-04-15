@@ -12,7 +12,6 @@ import {
 
 import { categories } from "./category.model";
 
-
 export const products = pgTable(
   "products",
   {
@@ -24,8 +23,8 @@ export const products = pgTable(
       .notNull()
       .references(() => categories.id),
 
-    price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-    stock: integer("stock").notNull(),
+    price: text("price").notNull(),
+    stock: text("stock").notNull(),
     is_active: boolean("is_active").default(true).notNull(),
     image_url: text("image_url"),
     image_public_id: text("image_public_id"),

@@ -3,11 +3,11 @@ import { IProduct } from ".";
 export interface CreateProductPayload {
   name: string;
   description: string;
-  category_id: number;
+  category_id: string;
   price: number;
   stock: number;
   is_active: boolean;
-  image: string;
+  imageUri: string;
 }
 
 export interface CreateProductResponse {
@@ -15,13 +15,14 @@ export interface CreateProductResponse {
 }
 
 export interface UpdateProductPayload {
-  id: number;
+  id: string;
   name?: string;
   description?: string;
-  category_id?: number;
+  category_id?: string;
   price?: number;
   stock?: number;
   is_active?: boolean;
+  imageUri?: string;
 }
 
 export interface UpdateProductResponse {
@@ -29,16 +30,17 @@ export interface UpdateProductResponse {
 }
 
 export interface UploadProductImagePayload {
-  product_id: number;
-  image: string;
+  productId: string;
+  imageUri: string;
 }
 
 export interface UploadProductImageResponse {
+  message: string;
   data: IProduct;
 }
 
 export interface DeleteProductPayload {
-  id: number;
+  id: string;
   password: string;
 }
 

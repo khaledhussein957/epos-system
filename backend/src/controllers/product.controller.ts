@@ -55,7 +55,7 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: "Product image is required" });
     }
 
-    const category = await create_product(
+    const product = await create_product(
       name,
       description,
       category_id,
@@ -65,7 +65,7 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       image,
     );
 
-    return res.status(201).json({ category });
+    return res.status(201).json({ product });
   } catch (error: any) {
     console.error("Error creating product:", error);
 

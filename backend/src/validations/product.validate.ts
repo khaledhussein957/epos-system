@@ -6,12 +6,9 @@ export const createProductSchema = zod.object({
 
   category_id: zod.string().uuid("Invalid category ID format"),
 
-  price: zod
-    .number()
-    .positive("Price must be a positive number")
-    .transform((val) => val.toString()), // ✅ fix
+  price: zod.string().nonempty("Price is required"),
 
-  stock: zod.number().int().nonnegative("Stock must be a non-negative integer"),
+  stock: zod.string().nonempty("Stock is required"),
 
   is_active: zod.boolean().default(true),
 });

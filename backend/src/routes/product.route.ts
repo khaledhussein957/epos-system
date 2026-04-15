@@ -14,13 +14,23 @@ import { uploadProduct } from "../middlewares/upload.middleware";
 
 const router = Router();
 
-router.post("/", protectRoute, createProduct);
+router.post(
+  "/",
+  protectRoute,
+  uploadProduct.single("productImage"),
+  createProduct,
+);
 
 router.get("/", getProducts);
 router.get("/:id", getProductById);
 
 router.put("/:id", protectRoute, updateProduct);
-router.put("/product-image/:id", protectRoute, uploadProduct.single("productImage"), uploadProductImage);
+router.put(
+  "/product-image/:id",
+  protectRoute,
+  uploadProduct.single("productImage"),
+  uploadProductImage,
+);
 
 router.delete("/:id", protectRoute, deleteProduct);
 

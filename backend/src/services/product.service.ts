@@ -74,13 +74,16 @@ export const create_product = async (
 };
 
 export const get_all_products = async () => {
-  const products = await db.query.products.findMany({});
+  const products = await db.query.products.findMany({
+    with: { category: true },
+  });
   return products;
 };
 
 export const get_product_by_id = async (productId: string) => {
   const product = await db.query.products.findFirst({
     where: eq(productTable.id, productId),
+    with: { category: true },
   });
 
   if (!product) {

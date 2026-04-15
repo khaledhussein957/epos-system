@@ -4,7 +4,7 @@ import { Redirect, Stack } from "expo-router";
 export default function AuthLayout() {
   const { isAuthenticated } = useAuthStore();
 
-  if (isAuthenticated) return <Redirect href={"/(tabs)/index"} />;
+  if (isAuthenticated) return <Redirect href={"/(tabs)"} />;
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }

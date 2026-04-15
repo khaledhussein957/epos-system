@@ -2,6 +2,7 @@ import { ICategory } from ".";
 
 export interface CreateCategoryPayload {
   name: string;
+  image_url: string;
 }
 export interface CreateCategoryResponse {
   category: ICategory;
@@ -10,6 +11,7 @@ export interface CreateCategoryResponse {
 export interface UpdateCategoryPayload {
   id: string;
   name: string;
+  image_url: string;
 }
 
 export interface UpdateCategoryResponse {

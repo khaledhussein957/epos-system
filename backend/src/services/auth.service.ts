@@ -63,7 +63,7 @@ export const registerUser = async (
 
   return {
     message: "Registration successful",
-    userToken,
+    token: userToken,
     user: {
       _id: user.id,
       name: user.name,
@@ -108,7 +108,7 @@ export const loginUser = async (email: string, password: string) => {
 
   return {
     message: "Login successful",
-    userToken,
+    token: userToken,
     user: {
       _id: user.id, // Map id to _id for compatibility
       name: user.name,
