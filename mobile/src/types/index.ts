@@ -1,13 +1,17 @@
 export interface IUser {
   id: number;
 
+
   name: string;
   email: string;
   phone: string;
 
+
   role: string;
 
+
   profilePicture: string;
+
 
   isBlock: boolean;
   lastLogin: Date;
