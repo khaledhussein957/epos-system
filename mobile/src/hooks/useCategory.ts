@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
 
 import { api } from "../lib/axios";
 import { useAuthStore } from "../store/auth.store";
@@ -22,11 +22,7 @@ const getFileMeta = (uri: string) => {
   const name = segments[segments.length - 1] || `category-${Date.now()}.jpg`;
   const ext = name.split(".").pop()?.toLowerCase();
   const type =
-    ext === "png"
-      ? "image/png"
-      : ext === "gif"
-        ? "image/gif"
-        : "image/jpeg";
+    ext === "png" ? "image/png" : ext === "gif" ? "image/gif" : "image/jpeg";
 
   return { uri, name, type };
 };
@@ -56,35 +52,81 @@ export const useCreateCategory = () => {
 
   return useMutation({
     mutationKey: ["category", "create"],
+
+    // ⚡ OPTIMISTIC UPDATE
+    onMutate: async (payload: CreateCategoryPayload) => {
+      await queryClient.cancelQueries({ queryKey: ["categories"] });
+
+      const previousCategories = queryClient.getQueryData<any[]>([
+        "categories",
+      ]);
+
+      const optimisticCategory = {
+        id: `temp-${Date.now()}`,
+        name: payload.name,
+        image_url: payload.image_url.uri,
+        optimistic: true,
+      };
+
+      queryClient.setQueryData(["categories"], (old: any[] = []) => [
+        optimisticCategory,
+        ...old,
+      ]);
+
+      return { previousCategories };
+    },
+
     mutationFn: async (payload: CreateCategoryPayload) => {
+      if (!token) throw new Error("No auth token");
+
       const formData = new FormData();
+      const fileUri =
+        Platform.OS === "android"
+          ? payload.image_url.uri
+          : payload.image_url.uri.replace("file://", "");
+
       formData.append("name", payload.name);
-      
-      if (payload.image_url) {
-        formData.append("categoryImage", getFileMeta(payload.image_url) as any);
-      }
+      formData.append("categoryImage", {
+        uri: fileUri,
+        name: payload.image_url.name,
+        type: payload.image_url.type,
+      } as any);
 
       const { data } = await api.post<CreateCategoryResponse>(
         "/categories",
         formData,
         {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data"
+            "Content-Type": "multipart/form-data",
           },
         },
       );
+
       return data;
     },
+
+    // ✅ FIX REAL DATA AFTER SUCCESS
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CATEGORIES_KEY });
-      Alert.alert("Success", "Category created successfully");
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
-    onError: (error: AxiosError<{ message: string }>) => {
+
+    // ❌ ROLLBACK ON ERROR
+    onError: (error: any, _payload, context: any) => {
+      if (context?.previousCategories) {
+        queryClient.setQueryData(["categories"], context.previousCategories);
+      }
+
       Alert.alert(
         "Error",
         error.response?.data?.message ?? "Failed to create category",
       );
+    },
+
+    // 🔄 FINAL SYNC
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
   });
 };
@@ -98,7 +140,7 @@ export const useUpdateCategory = () => {
     mutationFn: async (payload: UpdateCategoryPayload) => {
       const formData = new FormData();
       formData.append("name", payload.name);
-      
+
       if (payload.image_url) {
         formData.append("categoryImage", getFileMeta(payload.image_url) as any);
       }
@@ -107,9 +149,9 @@ export const useUpdateCategory = () => {
         `/categories/${payload.id}`,
         formData,
         {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data"
+            "Content-Type": "multipart/form-data",
           },
         },
       );

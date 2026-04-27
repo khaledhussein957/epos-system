@@ -37,8 +37,8 @@ export const createCategory = async (req: AuthRequest, res: Response) => {
         .json({ message: "Unauthorized: User is not an admin" });
     }
 
-    const image_url = req.file?.path;
-    if (!image_url) {
+    const file = req.file;
+    if (!file) {
       return res.status(400).json({ message: "Image is required" });
     }
 
@@ -52,10 +52,7 @@ export const createCategory = async (req: AuthRequest, res: Response) => {
 
     const { name } = bodyValidation.data;
 
-    const newCategory = await create_Category(
-      name as string,
-      image_url as string,
-    );
+    const newCategory = await create_Category(name as string, file);
 
     res.status(201).json({ category: newCategory });
   } catch (error: any) {

@@ -15,7 +15,8 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(user-tabs)" />
+        <Stack.Screen name="(admin-tabs)" />
         <Stack.Screen name="screens" />
       </Stack>
     </QueryClientProvider>

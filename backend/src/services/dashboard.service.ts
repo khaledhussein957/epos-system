@@ -1,4 +1,4 @@
-import { count, sum, eq } from "drizzle-orm";
+import { count, sum, eq, ne } from "drizzle-orm";
 
 import { db } from "../config/db";
 import { categories as categoryTable } from "../models/category.model";
@@ -33,8 +33,14 @@ export const get_DashboardData = async (userId: string) => {
     totalCategoriesRes,
     totalRevenueRes,
   ] = await Promise.all([
-    db.select({ total: count() }).from(userTable),
-    db.select({ total: count() }).from(orderTable),
+    db
+      .select({ total: count() })
+      .from(userTable)
+      .where(ne(userTable.id, userId)),
+    db
+      .select({ total: count() })
+      .from(orderTable)
+      .where(ne(orderTable.user_id, userId)),
     db.select({ total: count() }).from(productTable),
     db.select({ total: count() }).from(categoryTable),
     db.select({ total: sum(orderItemsTable.price) }).from(orderItemsTable),

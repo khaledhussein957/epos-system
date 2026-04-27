@@ -11,7 +11,7 @@ export const get_AllCategories = async () => {
   return categories;
 };
 
-export const create_Category = async (name: string, image_url: string) => {
+export const create_Category = async (name: string, file?: any) => {
   const existingCategory = await db.query.categories.findFirst({
     where: (categories) => eq(categories.name, name),
   });
@@ -24,11 +24,19 @@ export const create_Category = async (name: string, image_url: string) => {
     throw err;
   }
 
-  const uploadResult = await cloudinary.uploader.upload(image_url, {
+  if (!file) {
+    const err = new Error("Image is required") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
+  }
+
+  const uploadResult = await cloudinary.uploader.upload(file.path, {
     folder: "categories",
     resource_type: "image",
-    public_id: `category_${Date.now()}`,
   });
+  console.log("done the upload");
 
   const [newCategory] = await db
     .insert(categoryTable)

@@ -12,16 +12,22 @@ type DashboardResponse = {
   totalRevenue: number;
 };
 
+type ApiResponse<T> = {
+  message: string;
+  data: T;
+};
+
 export const useGetDashboard = () => {
   const { token } = useAuthStore();
 
-  return useQuery<DashboardResponse, AxiosError<{ message?: string }>>({
+  return useQuery({
     queryKey: ["dashboard"],
     enabled: !!token,
     queryFn: async () => {
-      const { data } = await api.get<DashboardResponse>("/dashboard");
-      return data;
+      const res = await api.get<ApiResponse<DashboardResponse>>("/dashboard");
+
+      return res.data.data; // 👈 THIS FIXES EVERYTHING
     },
-    staleTime: 1000 * 30, // 30 seconds (good for dashboards)
+    staleTime: 1000 * 30,
   });
 };

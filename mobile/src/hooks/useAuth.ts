@@ -32,7 +32,11 @@ export const useRegister = () => {
     },
     onSuccess: (data) => {
       setAuth(data.user, data.token);
-      router.push("/(tabs)");
+      if (data.user.role === "admin") {
+        router.push("/(admin-tabs)");
+      } else {
+        router.push("/(user-tabs)");
+      }
     },
     onError: (error: AxiosError<{ message: string }>) => {
       Alert.alert("Error", error.response?.data.message);
@@ -53,7 +57,11 @@ export const useLogin = () => {
     },
     onSuccess: (data) => {
       setAuth(data.user, data.token);
-      router.push("/(tabs)");
+      if (data.user.role === "admin") {
+        router.push("/(admin-tabs)");
+      } else {
+        router.push("/(user-tabs)");
+      }
     },
     onError: (error: AxiosError<{ message: string }>) => {
       Alert.alert("Error", error.response?.data.message);
