@@ -1,9 +1,7 @@
 import type { Response } from "express";
 import { eq } from "drizzle-orm";
-import { unlink } from "fs/promises";
 
 import { db } from "../config/db";
-import cloudinary from "../config/cloudinary.ts";
 
 import { type AuthRequest } from "../middlewares/protectRoute.middleware";
 
@@ -60,7 +58,7 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       description,
       category_id,
       price as any,
-      stock,
+      stock as any,
       is_active,
       image,
     );
@@ -69,11 +67,13 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
   } catch (error: any) {
     console.error("Error creating product:", error);
 
-    // ⚠️ Handle unique constraint (optional but recommended)
-    if (error.code === "23505") {
-      return res.status(400).json({
-        message: "Product with this name already exists",
-      });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
     }
 
     return res.status(500).json({
@@ -87,9 +87,19 @@ export const getProducts = async (req: AuthRequest, res: Response) => {
     const products = await get_all_products();
 
     return res.status(200).json({ products });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error getting products:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -100,9 +110,19 @@ export const getProductById = async (req: AuthRequest, res: Response) => {
     const product = await get_product_by_id(productId as string);
 
     return res.status(200).json({ product });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error getting product:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -141,9 +161,19 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
     );
 
     return res.status(200).json({ product });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating product:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -173,9 +203,19 @@ export const uploadProductImage = async (req: AuthRequest, res: Response) => {
       message: "Product image uploaded",
       data: updatedProduct,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error uploading product image:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -226,10 +266,18 @@ export const deleteProduct = async (req: AuthRequest, res: Response) => {
     await delete_product(productId);
 
     return res.status(200).json({ message: "Product deleted successfully" });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error deleting product:", error);
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
     return res.status(500).json({
-      message: "Internal server error",
+      message: error.message || "Internal server error",
     });
   }
 };

@@ -26,7 +26,11 @@ export const registerUser = async (
   role: "admin" | "cashier" | "customer" = "customer",
 ) => {
   if (!name || !email || !password || !phone) {
-    throw new Error("All fields are required");
+    const err = new Error("All fields are required") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   email = email.toLowerCase().trim();
@@ -36,7 +40,11 @@ export const registerUser = async (
   });
 
   if (existingUser) {
-    throw new Error("User already exists with this email");
+    const err = new Error("User already exists with this email") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   const hashedPassword = await hashPassword(password);
@@ -55,7 +63,11 @@ export const registerUser = async (
     .returning();
 
   if (!user) {
-    throw new Error("Failed to create user");
+    const err = new Error("Failed to create user") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   const userToken = generateToken(user.id, user.role);
@@ -79,7 +91,11 @@ export const registerUser = async (
 
 export const loginUser = async (email: string, password: string) => {
   if (!email || !password) {
-    throw new Error("All fields are required");
+    const err = new Error("All fields are required") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   email = email.toLowerCase().trim();
@@ -88,16 +104,28 @@ export const loginUser = async (email: string, password: string) => {
     where: (user, { eq }) => eq(user.email, email),
   });
   if (!user) {
-    throw new Error("Invalid email or password");
+    const err = new Error("Invalid email or password") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   const isPasswordValid = await comparePassword(password, user.password);
   if (!isPasswordValid) {
-    throw new Error("Invalid email or password");
+    const err = new Error("Invalid email or password") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   if (user.isBlock) {
-    throw new Error("Your account has been blocked");
+    const err = new Error("Your account has been blocked") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   const now = new Date();
@@ -124,7 +152,11 @@ export const loginUser = async (email: string, password: string) => {
 
 export const recoveryPassword = async (email: string) => {
   if (!email) {
-    throw new Error("Email is required");
+    const err = new Error("Email is required") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   email = email.toLowerCase().trim();
@@ -133,7 +165,11 @@ export const recoveryPassword = async (email: string) => {
     where: (user, { eq }) => eq(user.email, email),
   });
   if (!user) {
-    throw new Error("User does not exist");
+    const err = new Error("User does not exist") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   const now = new Date();
@@ -145,17 +181,22 @@ export const recoveryPassword = async (email: string) => {
     const elapsed = now.getTime() - new Date(lastSent).getTime();
     if (elapsed >= 24 * 60 * 60 * 1000) resetCount = 0; // reset daily counter
     if (elapsed < 60 * 1000) {
-      return {
-        message:
-          "Please wait before requesting another password recovery email.",
+      const err = new Error(
+        "Please wait before requesting another password recovery email.",
+      ) as Error & {
+        status?: number;
       };
+      err.status = 404;
+      throw err;
     }
   }
 
   if (resetCount >= 3) {
-    return {
-      message: "Too many recovery attempts today",
+    const err = new Error("Too many recovery attempts today") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   resetCount += 1;
@@ -196,38 +237,70 @@ export const resetPassword = async (
   confirmPassword: string,
 ) => {
   if (!email || !code || !newPassword || !confirmPassword) {
-    throw new Error("All fields are required");
+    const err = new Error("All fields are required") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   if (newPassword !== confirmPassword) {
-    throw new Error("Passwords do not match");
+    const err = new Error("Passwords do not match") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   const user = await db.query.users.findFirst({
     where: (user, { eq }) => eq(user.email, email),
   });
   if (!user) {
-    throw new Error("User does not exist");
+    const err = new Error("User does not exist") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   if (user.resetPasswordCode !== code) {
-    throw new Error("Invalid reset code");
+    const err = new Error("Invalid reset code") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   if (
     user.resetPasswordCodeExpiry &&
     isResetPasswordCodeExpired(user.resetPasswordCodeExpiry)
   ) {
-    throw new Error("Reset code has expired");
+    const err = new Error("Reset code has expired") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   const isSamePassword = await comparePassword(newPassword, user.password);
   if (isSamePassword) {
-    throw new Error("New password must be different from old password");
+    const err = new Error(
+      "New password must be different from old password",
+    ) as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   if (newPassword.length < 8) {
-    throw new Error("Password must be at least 8 characters long");
+    const err = new Error(
+      "Password must be at least 8 characters long",
+    ) as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   const hashedPassword = await hashPassword(newPassword);

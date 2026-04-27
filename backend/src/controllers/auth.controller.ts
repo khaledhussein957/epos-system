@@ -33,6 +33,14 @@ export const registerAccount = async (req: Request, res: Response) => {
     res.json(result);
   } catch (error: any) {
     console.log("❌ Error in register account:", error);
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
     res.status(500).json({
       message: error.message || "Registration failed",
     });
@@ -56,6 +64,14 @@ export const loginAccount = async (req: Request, res: Response) => {
     res.json(result);
   } catch (error: any) {
     console.log("❌ Error in login account:", error);
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
     res.status(500).json({
       message: error.message || "Login failed",
     });
@@ -82,9 +98,13 @@ export const recoverPasswordAccount = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.log("Error in recovery password account:", error);
 
-    // If user does not exist, return 404
-    if (error.message === "User does not exist") {
-      return res.status(404).json({ message: "User not found" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
     }
 
     res.status(500).json({
@@ -112,7 +132,14 @@ export const resetPasswordAccount = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.log("❌ Error in reset password account:", error);
-
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
     res.status(400).json({
       message: error.message || "Password reset failed",
     });

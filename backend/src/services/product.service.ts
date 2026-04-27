@@ -24,9 +24,11 @@ export const create_product = async (
   });
 
   if (!category) {
-    return {
-      message: "Category not found",
+    const err = new Error("Category not found") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   const UploadResult = await cloudinary.uploader.upload(productImage, {
@@ -51,7 +53,7 @@ export const create_product = async (
         description,
         category_id,
         price: price.toString(),
-        stock,
+        stock: stock.toString(),
         is_active: isActive,
         image_url: UploadResult.secure_url,
         image_public_id: UploadResult.public_id,
@@ -87,7 +89,11 @@ export const get_product_by_id = async (productId: string) => {
   });
 
   if (!product) {
-    throw new Error("Product not found");
+    const err = new Error("Product not found") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   return product;
@@ -108,9 +114,11 @@ export const update_product = async (
   });
 
   if (!existingProduct) {
-    return {
-      message: "Product not found",
+    const err = new Error("Product not found") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   // Check if category exists    if (category_id) {
@@ -120,9 +128,11 @@ export const update_product = async (
     });
 
     if (!category) {
-      return {
-        message: "Category not found",
+      const err = new Error("Category not found") as Error & {
+        status?: number;
       };
+      err.status = 404;
+      throw err;
     }
   }
 
@@ -134,7 +144,7 @@ export const update_product = async (
         description,
         category_id,
         price: price?.toString() ?? existingProduct.price.toString(),
-        stock,
+        stock: stock?.toString() ?? existingProduct.stock.toString(),
         is_active,
         image_url: existingProduct.image_url,
         qr_code: "",
@@ -165,7 +175,11 @@ export const upload_product_image = async (
   });
 
   if (!product) {
-    throw new Error("Product not found");
+    const err = new Error("Product not found") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   // delete previous image
@@ -207,9 +221,11 @@ export const delete_product = async (productId: string) => {
   });
 
   if (!product) {
-    return {
-      message: "Product not found",
+    const err = new Error("Product not found") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   // 🖼️ Delete image from Cloudinary

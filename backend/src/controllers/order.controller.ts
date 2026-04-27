@@ -4,14 +4,36 @@ import type { AuthRequest } from "../middlewares/protectRoute.middleware";
 
 import {
   processTransaction,
+  getOrders,
   getOrdersByUserId,
 } from "../services/order.service";
 
 import { createOrderSchema } from "../validations/order.validate";
 
 import { generateReceipt } from "../utils/generatePDF.util";
-import { initiateWaafiPurchase } from "../utils/waafipay.util";
-import { createPaymentIntent } from "../utils/stripe.util";
+
+export const getAllOrders = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const orders = await getOrders(userId);
+
+    return res.status(200).json({ orders });
+  } catch (error: any) {
+    console.error("❌ Error fetching orders:", error);
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.errors });
+    }
+    return res
+      .status(500)
+      .json({ message: error.message || "Internal server error" });
+  }
+};
 
 export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
@@ -41,47 +63,16 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
 
     const receiptUrl = await generateReceipt(receiptData);
 
-    let paymentData = {};
-
-    if (
-      validatedData.payment_method === "mobile" ||
-      validatedData.payment_method === "bank"
-    ) {
-      const waafiResponse = await initiateWaafiPurchase({
-        accountNo: validatedData.payment_account as string,
-        amount: parseFloat(order.total),
-        orderId: order.id,
-        paymentMethod:
-          validatedData.payment_method === "mobile"
-            ? "MWALLET_ACCOUNT"
-            : "MWALLET_BANKACCOUNT",
-      });
-
-      if (!waafiResponse.success) {
-        return res.status(400).json({
-          message: "WaafiPay payment failed",
-          details: waafiResponse.responseMsg,
-        });
-      }
-
-      paymentData = { transactionId: waafiResponse.transactionId };
-    } else if (validatedData.payment_method === "card") {
-      const stripeResponse = await createPaymentIntent(
-        parseFloat(order.total),
-        order.id,
-        "USD",
-      );
-      paymentData = { clientSecret: stripeResponse.clientSecret };
-    }
-
     return res.status(201).json({
       message: "Order created successfully",
       order,
       receiptUrl,
-      payment: paymentData,
     });
   } catch (error: any) {
     console.error("❌ Error creating order:", error);
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
     if (error.name === "ZodError") {
       return res
         .status(400)
@@ -105,6 +96,9 @@ export const getMyOrders = async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     console.error("Error fetching my orders:", error);
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
     if (error.name === "ZodError") {
       return res
         .status(400)

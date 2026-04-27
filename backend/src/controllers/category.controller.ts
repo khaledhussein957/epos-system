@@ -58,9 +58,19 @@ export const createCategory = async (req: AuthRequest, res: Response) => {
     );
 
     res.status(201).json({ category: newCategory });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating category:", error);
-    res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -68,9 +78,19 @@ export const getCategories = async (req: AuthRequest, res: Response) => {
   try {
     const categories = await get_AllCategories();
     res.status(200).json({ categories });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error getting categories:", error);
-    res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -116,9 +136,19 @@ export const updateCategory = async (req: AuthRequest, res: Response) => {
       message: "Category updated successfully",
       category: updatedCategory,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating category:", error);
-    res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -164,8 +194,18 @@ export const deleteCategory = async (req: AuthRequest, res: Response) => {
     await delete_Category(categoryId as string);
 
     res.status(200).json({ message: "Category deleted successfully" });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error deleting category:", error);
-    res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };

@@ -17,7 +17,11 @@ export const create_Category = async (name: string, image_url: string) => {
   });
 
   if (existingCategory) {
-    return { error: "Category name already exists" };
+    const err = new Error("Category name already exists") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   const uploadResult = await cloudinary.uploader.upload(image_url, {
@@ -49,7 +53,11 @@ export const update_Category = async (
   });
 
   if (existingCategory) {
-    throw new Error("Category name already exists");
+    const err = new Error("Category name already exists") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   let image;
@@ -81,7 +89,11 @@ export const update_Category = async (
     .returning();
 
   if (!updatedCategory) {
-    throw new Error("Category not found");
+    const err = new Error("Category not found") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
   }
 
   return updatedCategory;
@@ -92,9 +104,11 @@ export const delete_Category = async (categoryId: string) => {
     where: (categories) => eq(categories.id, categoryId as string),
   });
   if (!category) {
-    return {
-      message: "Category not found",
+    const err = new Error("Category not found") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   if (category.public_image_id) {

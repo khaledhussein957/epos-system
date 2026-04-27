@@ -45,9 +45,19 @@ export const getAllUsers = async (req: AuthRequest, res: Response) => {
     const users = await get_all_users(userId);
 
     return res.status(200).json({ users });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Get All Users error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -72,10 +82,18 @@ export const toggleBlockUser = async (req: AuthRequest, res: Response) => {
     const result = await toggle_block_user(userId, targetUserId as string);
 
     return res.status(200).json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Toggle Block User error:", error);
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
     return res.status(500).json({
-      message: "Internal server error",
+      message: error.message || "Internal server error",
     });
   }
 };
@@ -106,9 +124,19 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     );
 
     return res.status(200).json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Change Password error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -128,9 +156,19 @@ export const uploadProfileImage = async (req: AuthRequest, res: Response) => {
     const result = await upload_profile_image(userId, req.file.path);
 
     return res.status(200).json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Upload Profile Image error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -155,9 +193,19 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     const result = await update_profile(userId, email!, name!, phone!);
 
     return res.status(200).json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Update Profile error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -221,9 +269,19 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
     return res
       .status(200)
       .json({ message: "User profile updated successfully" });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Update User Profile error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -258,9 +316,19 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     const result = await delete_user(userId, targetUserId as string, password);
 
     return res.status(200).json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Delete User error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };
 
@@ -285,8 +353,18 @@ export const deleteAccount = async (req: AuthRequest, res: Response) => {
     const result = await delete_account(userId, password);
 
     return res.status(200).json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Delete Account error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    return res.status(500).json({
+      message: error.message || "Internal server error",
+    });
   }
 };

@@ -6,6 +6,41 @@ import { products } from "../models/product.model";
 import { customers } from "../models/customers.model";
 import type { CreateOrderInput } from "../validations/order.validate";
 
+export const getOrders = async (userId: string) => {
+  const user = await db.query.users.findFirst({
+    where: (users) => eq(users.id, userId),
+  });
+  if (!user) {
+    const err = new Error("User not found") as Error & {
+      status?: number;
+    };
+    err.status = 404;
+    throw err;
+  }
+
+  if (user.role !== "admin") {
+    const err = new Error("Forbidden: admin role required") as Error & {
+      status?: number;
+    };
+    err.status = 403;
+    throw err;
+  }
+
+  const userOrders = await db.query.orders.findMany({
+    with: {
+      orderItems: {
+        with: {
+          product: true,
+        },
+      },
+      customer: true,
+    },
+    orderBy: (orders, { desc }) => [desc(orders.created_at)],
+  });
+
+  return userOrders;
+};
+
 export const processTransaction = async (
   userId: string,
   input: CreateOrderInput,
@@ -49,7 +84,11 @@ export const processTransaction = async (
       .where(inArray(products.id, productIds));
 
     if (dbProducts.length !== productIds.length) {
-      throw new Error("One or more products not found");
+      const err = new Error("One or more products not found") as Error & {
+        status?: number;
+      };
+      err.status = 404;
+      throw err;
     }
 
     const productMap = new Map(dbProducts.map((p) => [p.id, p]));
@@ -57,10 +96,22 @@ export const processTransaction = async (
 
     for (const item of input.items) {
       const product = productMap.get(item.product_id);
-      if (!product) throw new Error(`Product ${item.product_id} not found`);
+      if (!product) {
+        const err = new Error("Product not found") as Error & {
+          status?: number;
+        };
+        err.status = 404;
+        throw err;
+      }
 
       if (product.stock < item.quantity) {
-        throw new Error(`Insufficient stock for product: ${product.name}`);
+        const err = new Error(
+          `Insufficient stock for product: ${product.name}`,
+        ) as Error & {
+          status?: number;
+        };
+        err.status = 404;
+        throw err;
       }
 
       totalAmount += Number(product.price) * Number(item.quantity);
@@ -78,7 +129,13 @@ export const processTransaction = async (
       .returning();
 
     const newOrder = ordersInserted[0];
-    if (!newOrder) throw new Error("Failed to create order");
+    if (!newOrder) {
+      const err = new Error("Failed to create order") as Error & {
+        status?: number;
+      };
+      err.status = 500;
+      throw err;
+    }
 
     // 4. Create Order Items and Deduct Stock
     for (const item of input.items) {
@@ -121,9 +178,11 @@ export const getOrdersByUserId = async (userId: string) => {
     where: (users) => eq(users.id, userId),
   });
   if (!user) {
-    return {
-      message: "User not found",
+    const err = new Error("User not found") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   const userOrders = await db.query.orders.findMany({

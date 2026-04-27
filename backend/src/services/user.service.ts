@@ -26,18 +26,22 @@ export const toggle_block_user = async (
   targetUserId: string,
 ) => {
   if (targetUserId === userId) {
-    return {
-      message: "You cannot block yourself",
+    const err = new Error("You cannot block yourself") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   const targetUser = await db.query.users.findFirst({
     where: (users) => eq(users.id, targetUserId as string),
   });
   if (!targetUser) {
-    return {
-      message: "Target user not found",
+    const err = new Error("Target user not found") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   const newBlockStatus = !targetUser.isBlock;
@@ -63,15 +67,19 @@ export const change_password = async (
     where: (users) => eq(users.id, userId),
   });
   if (!user) {
-    return {
-      message: "User not found",
+    const err = new Error("User not found") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   if (password !== confirmPassword) {
-    return {
-      message: "Passwords do not match",
+    const err = new Error("Passwords do not match") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   const isCurrentPasswordValid = await comparePassword(
@@ -79,9 +87,11 @@ export const change_password = async (
     user.password,
   );
   if (!isCurrentPasswordValid) {
-    return {
-      message: "Current password is incorrect",
+    const err = new Error("Current password is incorrect") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   const hashedPassword = await hashPassword(password);
@@ -104,9 +114,11 @@ export const upload_profile_image = async (
     where: (users) => eq(users.id, userId),
   });
   if (!user) {
-    return {
-      message: "User not found",
+    const err = new Error("User not found") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   // Delete previous avatar from Cloudinary (non-blocking)
@@ -157,9 +169,11 @@ export const update_profile = async (
       where: (users) => eq(users.email, email) && ne(users.id, userId),
     });
     if (existingUser) {
-      return {
-        message: "Email already in use",
+      const err = new Error("Email already in use") as Error & {
+        status?: number;
       };
+      err.status = 404;
+      throw err;
     }
   }
 
@@ -180,32 +194,42 @@ export const delete_user = async (
   password: string,
 ) => {
   if (!targetUserId) {
-    return {
-      message: "Target user ID is required",
+    const err = new Error("Target user ID is required") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   // Admins cannot delete themselves via this endpoint
   if (targetUserId === userId) {
-    return {
-      message: "Admins cannot delete their own account",
+    const err = new Error("Admins cannot delete their own account") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   const targetUser = await db.query.users.findFirst({
     where: (users) => eq(users.id, targetUserId as string),
   });
   if (!targetUser) {
-    return {
-      message: "Target user not found",
+    const err = new Error("Target user not found") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   // Prevent deleting another admin account
   if (targetUser.role === "admin") {
-    return {
-      message: "You cannot delete another admin account",
+    const err = new Error(
+      "You cannot delete another admin account",
+    ) as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   // Fetch the admin's own record to verify their password
@@ -213,16 +237,20 @@ export const delete_user = async (
     where: (users) => eq(users.id, userId),
   });
   if (!adminUser) {
-    return {
-      message: "Admin user not found",
+    const err = new Error("Admin user not found") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   const isPasswordMatch = await comparePassword(password, adminUser.password);
   if (!isPasswordMatch) {
-    return {
-      message: "Admin password is incorrect",
+    const err = new Error("Admin password is incorrect") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   // Delete target user's avatar from Cloudinary (non-blocking)
@@ -255,16 +283,20 @@ export const delete_account = async (userId: string, password: string) => {
     where: (users) => eq(users.id, userId),
   });
   if (!user) {
-    return {
-      message: "User not found",
+    const err = new Error("User not found") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   const isPasswordValid = await comparePassword(password, user.password);
   if (!isPasswordValid) {
-    return {
-      message: "Current password is incorrect",
+    const err = new Error("Current password is incorrect") as Error & {
+      status?: number;
     };
+    err.status = 404;
+    throw err;
   }
 
   // Delete avatar from Cloudinary (non-blocking)
