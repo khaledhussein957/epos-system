@@ -8,20 +8,24 @@ import { products as productTable } from "../models/product.model";
 import { users as userTable } from "../models/user.model";
 
 export const get_DashboardData = async (userId: string) => {
-  // 1. Validate user
   const user = await db.query.users.findFirst({
     where: (users) => eq(users.id, userId),
   });
 
   if (!user) {
-    return { message: "User not found" };
+    const err = new Error("User not found") as Error & { status?: number };
+    err.status = 404;
+    throw err;
   }
 
   if (user.role !== "admin") {
-    return { message: "User is not authorized" };
+    const err = new Error("Forbidden: admin role required") as Error & {
+      status?: number;
+    };
+    err.status = 403;
+    throw err;
   }
 
-  // 2. Run all queries in parallel (FAST)
   const [
     totalUsersRes,
     totalOrdersRes,
@@ -36,7 +40,6 @@ export const get_DashboardData = async (userId: string) => {
     db.select({ total: sum(orderItemsTable.price) }).from(orderItemsTable),
   ]);
 
-  // 3. Normalize results (handle nulls safely)
   return {
     totalUsers: totalUsersRes[0]?.total ?? 0,
     totalOrders: totalOrdersRes[0]?.total ?? 0,

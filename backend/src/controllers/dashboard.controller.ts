@@ -18,11 +18,14 @@ export const controller_get_DashboardData = async (
       data: dashboardData,
     });
   } catch (error: any) {
-    console.log(`Error in controller_get_DashboardData: ${error.message}`);
+    console.error(`Error in controller_get_DashboardData: ${error.message}`);
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
     if (error.name === "ZodError") {
       return res
         .status(400)
-        .json({ message: "Validation error", errors: error.errors });
+        .json({ message: "Validation error", errors: error.issues });
     }
     return res
       .status(500)
