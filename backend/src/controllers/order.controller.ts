@@ -2,7 +2,10 @@ import type { Response } from "express";
 
 import type { AuthRequest } from "../middlewares/protectRoute.middleware";
 
-import { processTransaction } from "../services/order.service";
+import {
+  processTransaction,
+  getOrdersByUserId,
+} from "../services/order.service";
 
 import { createOrderSchema } from "../validations/order.validate";
 
@@ -79,6 +82,29 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     console.error("❌ Error creating order:", error);
+    if (error.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.errors });
+    }
+    return res
+      .status(500)
+      .json({ message: error.message || "Internal server error" });
+  }
+};
+
+export const getMyOrders = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const userOrders = await getOrdersByUserId(userId);
+
+    return res.status(200).json({
+      message: "Orders fetched successfully",
+      orders: userOrders,
+    });
+  } catch (error: any) {
+    console.error("Error fetching my orders:", error);
     if (error.name === "ZodError") {
       return res
         .status(400)

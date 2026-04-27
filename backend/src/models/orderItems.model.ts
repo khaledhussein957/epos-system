@@ -1,4 +1,11 @@
-import { pgTable, uuid, integer, index, timestamp } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  uuid,
+  integer,
+  index,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
 import { orders } from "./orders.model";
 import { products } from "./product.model";
@@ -15,7 +22,7 @@ export const orderItems = pgTable(
       .notNull()
       .references(() => products.id),
 
-    quantity: integer("quantity").notNull(),
+    quantity: text("quantity").notNull(),
     price: integer("price"),
 
     created_at: timestamp("created_at").defaultNow().notNull(),

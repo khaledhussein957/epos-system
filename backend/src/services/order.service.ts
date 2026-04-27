@@ -63,7 +63,7 @@ export const processTransaction = async (
         throw new Error(`Insufficient stock for product: ${product.name}`);
       }
 
-      totalAmount += parseFloat(product.price) * item.quantity;
+      totalAmount += Number(product.price) * Number(item.quantity);
     }
 
     // 3. Create Order
@@ -88,7 +88,7 @@ export const processTransaction = async (
         order_id: newOrder.id,
         product_id: item.product_id,
         quantity: item.quantity,
-        price: Math.round(parseFloat(product.price) * 100), // Storing as cents in order_items if it's integer
+        price: Math.round(Number(product.price) * 100), // Storing as cents in order_items if it's integer
       });
 
       await tx
@@ -114,4 +114,30 @@ export const processTransaction = async (
 
     return completeOrder;
   });
+};
+
+export const getOrdersByUserId = async (userId: string) => {
+  const user = await db.query.users.findFirst({
+    where: (users) => eq(users.id, userId),
+  });
+  if (!user) {
+    return {
+      message: "User not found",
+    };
+  }
+
+  const userOrders = await db.query.orders.findMany({
+    where: eq(orders.user_id, userId),
+    with: {
+      orderItems: {
+        with: {
+          product: true,
+        },
+      },
+      customer: true,
+    },
+    orderBy: (orders, { desc }) => [desc(orders.created_at)],
+  });
+
+  return userOrders;
 };
