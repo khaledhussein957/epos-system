@@ -14,9 +14,9 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="scan">
-        <NativeTabs.Trigger.Icon sf="bag.fill" />
-        <NativeTabs.Trigger.Label>Scan</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="cart">
+        <NativeTabs.Trigger.Icon sf="cart.fill" md="cart" />
+        <NativeTabs.Trigger.Label>Cart</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="profile">

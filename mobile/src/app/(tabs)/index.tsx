@@ -4,9 +4,9 @@ import {
   Text,
   FlatList,
   ActivityIndicator,
-  SafeAreaView,
   TextInput,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
 import { useGetCategories } from "@/hooks/useCategory";
@@ -85,12 +85,18 @@ export default function Index() {
           Welcome {user?.name || "Guest"}
         </Text>
 
-        <Image
-          source={{
-            uri: user?.profilePicture || user?.name.charAt(0).toUpperCase(),
-          }}
-          className="w-10 h-10 rounded-full"
-        />
+        {user?.profilePicture ? (
+          <Image
+            source={{ uri: user.profilePicture }}
+            className="w-10 h-10 rounded-full"
+          />
+        ) : (
+          <View className="w-10 h-10 rounded-full bg-primary items-center justify-center">
+            <Text className="text-white font-bold text-lg">
+              {user?.name?.charAt(0).toUpperCase() || "G"}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* 🔹 Search */}

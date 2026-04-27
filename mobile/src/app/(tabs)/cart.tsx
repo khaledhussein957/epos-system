@@ -97,7 +97,9 @@ const CartScreen = () => {
 
       <View className="absolute bottom-0 left-0 right-0 px-5 py-5 bg-white dark:bg-black border-t border-gray-100 dark:border-zinc-800">
         <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-sm text-gray-500 dark:text-gray-400">Total</Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400">
+            Total
+          </Text>
           <Text className="text-2xl font-bold text-black dark:text-white">
             ${total.toFixed(2)}
           </Text>
