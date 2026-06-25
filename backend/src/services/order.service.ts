@@ -4,6 +4,7 @@ import { orders } from "../models/orders.model";
 import { orderItems } from "../models/orderItems.model";
 import { products } from "../models/product.model";
 import { customers } from "../models/customers.model";
+import { AppError } from "../utils/AppError";
 import type { CreateOrderInput } from "../validations/order.validate";
 
 export const getOrders = async (userId: string) => {
@@ -11,19 +12,11 @@ export const getOrders = async (userId: string) => {
     where: (users) => eq(users.id, userId),
   });
   if (!user) {
-    const err = new Error("User not found") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("User not found", 404);
   }
 
   if (user.role !== "admin") {
-    const err = new Error("Forbidden: admin role required") as Error & {
-      status?: number;
-    };
-    err.status = 403;
-    throw err;
+    throw new AppError("Forbidden: admin role required", 403);
   }
 
   const userOrders = await db.query.orders.findMany({
@@ -84,11 +77,7 @@ export const processTransaction = async (
       .where(inArray(products.id, productIds));
 
     if (dbProducts.length !== productIds.length) {
-      const err = new Error("One or more products not found") as Error & {
-        status?: number;
-      };
-      err.status = 404;
-      throw err;
+      throw new AppError("One or more products not found", 404);
     }
 
     const productMap = new Map(dbProducts.map((p) => [p.id, p]));
@@ -97,21 +86,14 @@ export const processTransaction = async (
     for (const item of input.items) {
       const product = productMap.get(item.product_id);
       if (!product) {
-        const err = new Error("Product not found") as Error & {
-          status?: number;
-        };
-        err.status = 404;
-        throw err;
+        throw new AppError("Product not found", 404);
       }
 
-      if (product.stock < item.quantity) {
-        const err = new Error(
+      if (Number(product.stock) < Number(item.quantity)) {
+        throw new AppError(
           `Insufficient stock for product: ${product.name}`,
-        ) as Error & {
-          status?: number;
-        };
-        err.status = 404;
-        throw err;
+          409,
+        );
       }
 
       totalAmount += Number(product.price) * Number(item.quantity);
@@ -130,11 +112,7 @@ export const processTransaction = async (
 
     const newOrder = ordersInserted[0];
     if (!newOrder) {
-      const err = new Error("Failed to create order") as Error & {
-        status?: number;
-      };
-      err.status = 500;
-      throw err;
+      throw new AppError("Failed to create order", 500);
     }
 
     // 4. Create Order Items and Deduct Stock
@@ -178,11 +156,7 @@ export const getOrdersByUserId = async (userId: string) => {
     where: (users) => eq(users.id, userId),
   });
   if (!user) {
-    const err = new Error("User not found") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("User not found", 404);
   }
 
   const userOrders = await db.query.orders.findMany({

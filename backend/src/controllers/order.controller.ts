@@ -14,9 +14,14 @@ import { generateReceipt } from "../utils/generatePDF.util";
 
 export const getAllOrders = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.id;
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Admins only" });
+    }
 
-    const orders = await getOrders(userId);
+    const orders = await getOrders(req.user.id);
 
     return res.status(200).json({ orders });
   } catch (error: any) {
@@ -37,10 +42,12 @@ export const getAllOrders = async (req: AuthRequest, res: Response) => {
 
 export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
     const validatedData = createOrderSchema.parse(req.body);
-    const userId = req.user!.id;
 
-    const order = (await processTransaction(userId, validatedData)) as any;
+    const order = await processTransaction(req.user.id, validatedData);
 
     if (!order) {
       return res.status(400).json({ message: "Failed to create order" });
@@ -52,11 +59,11 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       date: order.created_at,
       customerName: order.customer?.name,
       paymentMethod: order.payment_method,
-      items: order.orderItems.map((oi: any) => ({
+      items: order.orderItems.map((oi) => ({
         name: oi.product.name,
-        quantity: oi.quantity,
+        quantity: Number(oi.quantity),
         price: parseFloat(oi.product.price),
-        subtotal: parseFloat(oi.product.price) * oi.quantity,
+        subtotal: parseFloat(oi.product.price) * Number(oi.quantity),
       })),
       total: parseFloat(order.total),
     };
@@ -86,9 +93,11 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
 
 export const getMyOrders = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!.id;
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-    const userOrders = await getOrdersByUserId(userId);
+    const userOrders = await getOrdersByUserId(req.user.id);
 
     return res.status(200).json({
       message: "Orders fetched successfully",

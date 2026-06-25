@@ -1,9 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { Alert } from "react-native";
 
 import { api } from "../lib/axios";
-import { useAuthStore } from "../store/auth.store";
+import { notify } from "../lib/notify";
+import { appendFile, type RNFile } from "../lib/formData";
 
 import { IUser } from "@/types";
 import {
@@ -22,208 +22,135 @@ import {
   DeleteAccountResponse,
 } from "@/types/user.types";
 
-export const useGetUsers = () => {
-  const { token } = useAuthStore();
+const errorMessage = (
+  error: AxiosError<{ message?: string }>,
+  fallback: string,
+) => error.response?.data?.message ?? fallback;
 
-  return useMutation({
+export const useGetUsers = () =>
+  useMutation({
     mutationKey: ["user", "get"],
     mutationFn: async () => {
-      const { data } = await api.get<IUser[]>("/users", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const { data } = await api.get<IUser[]>("/users");
       return data;
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert("Error", error.response?.data.message);
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to load users", errorMessage(error, "Try again."));
     },
   });
-};
 
-export const useUpdateProfile = () => {
-  const { token } = useAuthStore();
-
-  return useMutation({
+export const useUpdateProfile = () =>
+  useMutation({
     mutationKey: ["user", "update-profile"],
     mutationFn: async (payload: UpdateProfilePayload) => {
       const { data } = await api.put<UpdateProfileResponse>(
         "/users/update-profile",
         payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       );
       return data;
     },
-    onSuccess: () => {
-      Alert.alert("Success", "Profile updated successfully");
-    },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert("Error", error.response?.data.message);
+    onSuccess: () => notify.success("Profile updated"),
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to update profile", errorMessage(error, "Try again."));
     },
   });
-};
 
-export const useUploadProfileImage = () => {
-  const { token } = useAuthStore();
-
-  return useMutation({
+export const useUploadProfileImage = () =>
+  useMutation({
     mutationKey: ["user", "upload-image"],
-    mutationFn: async (file: { uri: string; name: string; type: string }) => {
+    mutationFn: async (file: RNFile) => {
       const formData = new FormData();
-
-      formData.append("profileImage", file as any);
+      appendFile(formData, "profileImage", file);
 
       const { data } = await api.put<UploadProfileImageResponse>(
         "/users/profile-image",
         formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
 
       return data;
     },
-    onSuccess: () => {
-      Alert.alert("Success", "Profile image updated");
-    },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert("Error", error.response?.data.message);
+    onSuccess: () => notify.success("Profile image updated"),
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to upload image", errorMessage(error, "Try again."));
     },
   });
-};
 
-export const useChangePassword = () => {
-  const { token } = useAuthStore();
-
-  return useMutation({
+export const useChangePassword = () =>
+  useMutation({
     mutationKey: ["user", "change-password"],
     mutationFn: async (payload: ChangePasswordPayload) => {
       const { data } = await api.put<ChangePasswordResponse>(
         "/users/change-password",
         payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       );
       return data;
     },
-    onSuccess: () => {
-      Alert.alert("Success", "Password changed successfully");
-    },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert("Error", error.response?.data.message);
+    onSuccess: () => notify.success("Password changed"),
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to change password", errorMessage(error, "Try again."));
     },
   });
-};
 
-export const useUpdateUserProfile = () => {
-  const { token } = useAuthStore();
-
-  return useMutation({
+export const useUpdateUserProfile = () =>
+  useMutation({
     mutationKey: ["user", "update", "admin"],
     mutationFn: async (payload: UpdateUserProfilePayload) => {
       const { data } = await api.put<UpdateUserProfileResponse>(
         `/users/update-user-profile/${payload.targetUserId}`,
         payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       );
       return data;
     },
-    onSuccess: () => {
-      Alert.alert("Success", "User updated successfully");
-    },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert("Error", error.response?.data.message);
+    onSuccess: () => notify.success("User updated"),
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to update user", errorMessage(error, "Try again."));
     },
   });
-};
 
-export const useToggleBlockUser = () => {
-  const { token } = useAuthStore();
-
-  return useMutation({
+export const useToggleBlockUser = () =>
+  useMutation({
     mutationKey: ["user", "toggle-block"],
     mutationFn: async (payload: ToggleBlockUserPayload) => {
       const { data } = await api.put<ToggleBlockUserResponse>(
         `/users/toggle-block-user/${payload.targetUserId}`,
         {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       );
       return data;
     },
-    onSuccess: () => {
-      Alert.alert("Success", "User status updated");
-    },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert("Error", error.response?.data.message);
+    onSuccess: () => notify.success("User status updated"),
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to update status", errorMessage(error, "Try again."));
     },
   });
-};
 
-export const useDeleteUser = () => {
-  const { token } = useAuthStore();
-
-  return useMutation({
+export const useDeleteUser = () =>
+  useMutation({
     mutationKey: ["user", "delete"],
     mutationFn: async (payload: DeleteUserPayload) => {
       const { data } = await api.delete<DeleteUserResponse>(
         `/users/delete-user/${payload.targetUserId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       );
       return data;
     },
-    onSuccess: () => {
-      Alert.alert("Success", "User deleted successfully");
-    },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert("Error", error.response?.data.message);
+    onSuccess: () => notify.success("User deleted"),
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to delete user", errorMessage(error, "Try again."));
     },
   });
-};
 
-export const useDeleteAccount = () => {
-  const { token } = useAuthStore();
-
-  return useMutation({
+export const useDeleteAccount = () =>
+  useMutation({
     mutationKey: ["user", "delete-account"],
     mutationFn: async (payload: DeleteAccountPayload) => {
       const { data } = await api.put<DeleteAccountResponse>(
         "/users/delete-account",
         payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       );
       return data;
     },
-    onSuccess: () => {
-      Alert.alert("Success", "Account deleted successfully");
-    },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert("Error", error.response?.data.message);
+    onSuccess: () => notify.success("Account deleted"),
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to delete account", errorMessage(error, "Try again."));
     },
   });
-};

@@ -139,7 +139,7 @@ const StatCard = React.memo(function StatCard({
         className="w-10 h-10 rounded-2xl items-center justify-center mb-3"
         style={{ backgroundColor: `${color}20` }}
       >
-        <SymbolView name={icon} size={20} tintColor={color} />
+        <SymbolView name={icon as never} size={20} tintColor={color} />
       </View>
 
       <Text className="text-2xl font-black text-black dark:text-white">

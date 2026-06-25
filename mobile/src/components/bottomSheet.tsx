@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { ReactNode, useEffect } from "react";
 import { View, Pressable, Keyboard, Dimensions } from "react-native";
 import Animated, {
   useSharedValue,
@@ -9,7 +9,13 @@ import Animated, {
 
 const { height } = Dimensions.get("window");
 
-export const BottomSheet = ({ visible, children, onClose }: any) => {
+interface BottomSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  children: ReactNode;
+}
+
+export const BottomSheet = ({ visible, children, onClose }: BottomSheetProps) => {
   const translateY = useSharedValue(height);
   const opacity = useSharedValue(0);
 

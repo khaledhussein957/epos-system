@@ -1,19 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
-import { Alert } from "react-native";
 
 import { api } from "../lib/axios";
 import { useAuthStore } from "../store/auth.store";
+import { notify } from "../lib/notify";
 import { CreateOrderPayload, CreateOrderResponse } from "../types/order.types";
 import { IOrder } from "@/types";
 
 export const useGetOrders = () => {
-  const { token } = useAuthStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return useQuery({
     queryKey: ["orders"],
-    enabled: !!token,
+    enabled: isAuthenticated,
     queryFn: async () => {
       const { data } = await api.get<IOrder[]>("/orders");
       return data;
@@ -35,24 +35,24 @@ export const useCreateOrder = () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["orders", "me"] });
 
-      Alert.alert("Success", "Order created successfully");
+      notify.success("Order created");
       router.push("/orders");
     },
     onError: (error: AxiosError<{ message?: string }>) => {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message || "Something went wrong",
+      notify.error(
+        "Failed to create order",
+        error.response?.data?.message ?? "Try again.",
       );
     },
   });
 };
 
 export const useGetMyOrders = () => {
-  const { token } = useAuthStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return useQuery({
     queryKey: ["orders", "me"],
-    enabled: !!token,
+    enabled: isAuthenticated,
     queryFn: async () => {
       const { data } = await api.get<IOrder[]>("/orders/my-orders");
       return data;

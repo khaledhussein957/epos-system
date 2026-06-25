@@ -15,7 +15,7 @@ export interface CreateCategoryResponse {
 export interface UpdateCategoryPayload {
   id: string;
   name: string;
-  image_url: string;
+  image_url?: string;
 }
 
 export interface UpdateCategoryResponse {

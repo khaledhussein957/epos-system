@@ -12,6 +12,7 @@ import {
   isResetPasswordCodeExpired,
   resetPasswordCodeExpiration,
 } from "../utils/auth.util";
+import { AppError } from "../utils/AppError";
 
 import {
   sendResetPasswordEmail,
@@ -26,11 +27,7 @@ export const registerUser = async (
   role: "admin" | "cashier" | "customer" = "customer",
 ) => {
   if (!name || !email || !password || !phone) {
-    const err = new Error("All fields are required") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("All fields are required", 400);
   }
 
   email = email.toLowerCase().trim();
@@ -40,11 +37,7 @@ export const registerUser = async (
   });
 
   if (existingUser) {
-    const err = new Error("User already exists with this email") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("User already exists with this email", 409);
   }
 
   const hashedPassword = await hashPassword(password);
@@ -63,11 +56,7 @@ export const registerUser = async (
     .returning();
 
   if (!user) {
-    const err = new Error("Failed to create user") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("Failed to create user", 500);
   }
 
   const userToken = generateToken(user.id, user.role);
@@ -91,11 +80,7 @@ export const registerUser = async (
 
 export const loginUser = async (email: string, password: string) => {
   if (!email || !password) {
-    const err = new Error("All fields are required") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("All fields are required", 400);
   }
 
   email = email.toLowerCase().trim();
@@ -104,28 +89,16 @@ export const loginUser = async (email: string, password: string) => {
     where: (user, { eq }) => eq(user.email, email),
   });
   if (!user) {
-    const err = new Error("Invalid email or password") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("Invalid email or password", 401);
   }
 
   const isPasswordValid = await comparePassword(password, user.password);
   if (!isPasswordValid) {
-    const err = new Error("Invalid email or password") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("Invalid email or password", 401);
   }
 
   if (user.isBlock) {
-    const err = new Error("Your account has been blocked") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("Your account has been blocked", 403);
   }
 
   const now = new Date();
@@ -152,11 +125,7 @@ export const loginUser = async (email: string, password: string) => {
 
 export const recoveryPassword = async (email: string) => {
   if (!email) {
-    const err = new Error("Email is required") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("Email is required", 400);
   }
 
   email = email.toLowerCase().trim();
@@ -165,11 +134,7 @@ export const recoveryPassword = async (email: string) => {
     where: (user, { eq }) => eq(user.email, email),
   });
   if (!user) {
-    const err = new Error("User does not exist") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("User does not exist", 404);
   }
 
   const now = new Date();
@@ -181,22 +146,15 @@ export const recoveryPassword = async (email: string) => {
     const elapsed = now.getTime() - new Date(lastSent).getTime();
     if (elapsed >= 24 * 60 * 60 * 1000) resetCount = 0; // reset daily counter
     if (elapsed < 60 * 1000) {
-      const err = new Error(
+      throw new AppError(
         "Please wait before requesting another password recovery email.",
-      ) as Error & {
-        status?: number;
-      };
-      err.status = 404;
-      throw err;
+        429,
+      );
     }
   }
 
   if (resetCount >= 3) {
-    const err = new Error("Too many recovery attempts today") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("Too many recovery attempts today", 429);
   }
 
   resetCount += 1;
@@ -237,70 +195,41 @@ export const resetPassword = async (
   confirmPassword: string,
 ) => {
   if (!email || !code || !newPassword || !confirmPassword) {
-    const err = new Error("All fields are required") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("All fields are required", 400);
   }
 
   if (newPassword !== confirmPassword) {
-    const err = new Error("Passwords do not match") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("Passwords do not match", 400);
+  }
+
+  if (newPassword.length < 8) {
+    throw new AppError("Password must be at least 8 characters long", 400);
   }
 
   const user = await db.query.users.findFirst({
     where: (user, { eq }) => eq(user.email, email),
   });
   if (!user) {
-    const err = new Error("User does not exist") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("User does not exist", 404);
   }
 
   if (user.resetPasswordCode !== code) {
-    const err = new Error("Invalid reset code") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("Invalid reset code", 400);
   }
 
   if (
     user.resetPasswordCodeExpiry &&
     isResetPasswordCodeExpired(user.resetPasswordCodeExpiry)
   ) {
-    const err = new Error("Reset code has expired") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("Reset code has expired", 410);
   }
 
   const isSamePassword = await comparePassword(newPassword, user.password);
   if (isSamePassword) {
-    const err = new Error(
+    throw new AppError(
       "New password must be different from old password",
-    ) as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
-  }
-
-  if (newPassword.length < 8) {
-    const err = new Error(
-      "Password must be at least 8 characters long",
-    ) as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+      400,
+    );
   }
 
   const hashedPassword = await hashPassword(newPassword);

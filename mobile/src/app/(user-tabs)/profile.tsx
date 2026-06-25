@@ -92,7 +92,7 @@ function ProfileOption({ icon, label, onPress }: { icon: string; label: string; 
       className="flex-row items-center justify-between py-4 border-b border-gray-50 dark:border-zinc-700 last:border-0"
     >
       <View className="flex-row items-center">
-        <SymbolView name={icon} size={20} tintColor="#6B7280" />
+        <SymbolView name={icon as never} size={20} tintColor="#6B7280" />
         <Text className="text-black dark:text-white font-medium ml-3">{label}</Text>
       </View>
       <SymbolView name="chevron.right" size={16} tintColor="#D1D5DB" />

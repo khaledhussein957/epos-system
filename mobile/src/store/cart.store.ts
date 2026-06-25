@@ -1,15 +1,8 @@
-import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import { IProduct } from "../types";
-
-const secureStorage = {
-  getItem: (name: string) => SecureStore.getItemAsync(name),
-  setItem: (name: string, value: string) =>
-    SecureStore.setItemAsync(name, value),
-  removeItem: (name: string) => SecureStore.deleteItemAsync(name),
-};
 
 export interface CartItem {
   product: IProduct;
@@ -29,7 +22,9 @@ export const useCartStore = create<CartStore>()(
       items: [],
       addItem: (product) =>
         set((state) => {
-          const existing = state.items.find((item) => item.product.id === product.id);
+          const existing = state.items.find(
+            (item) => item.product.id === product.id,
+          );
 
           if (existing) {
             return {
@@ -53,7 +48,7 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: "cart-storage",
-      storage: createJSONStorage(() => secureStorage),
+      storage: createJSONStorage(() => AsyncStorage),
     },
   ),
 );

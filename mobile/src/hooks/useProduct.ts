@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { Alert } from "react-native";
 
 import { api } from "../lib/axios";
-import { useAuthStore } from "../store/auth.store";
+import { appendFile, getFileMeta } from "../lib/formData";
+import { notify } from "../lib/notify";
 
 import {
   CreateProductPayload,
@@ -19,19 +19,8 @@ import { IProduct } from "../types";
 
 const PRODUCTS_KEY = ["products"];
 
-const getFileMeta = (uri: string) => {
-  const segments = uri.split("/");
-  const name = segments[segments.length - 1] || `product-${Date.now()}.jpg`;
-  const ext = name.split(".").pop()?.toLowerCase();
-  const type =
-    ext === "png"
-      ? "image/png"
-      : ext === "gif"
-        ? "image/gif"
-        : "image/jpeg";
-
-  return { uri, name, type };
-};
+const errorMessage = (error: AxiosError<{ message?: string }>, fallback: string) =>
+  error.response?.data?.message ?? fallback;
 
 export const useGetProducts = () => {
   return useQuery<IProduct[]>({
@@ -55,7 +44,6 @@ export const useGetProduct = (id: string) => {
 };
 
 export const useCreateProduct = () => {
-  const { token } = useAuthStore();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -68,52 +56,38 @@ export const useCreateProduct = () => {
       formData.append("price", String(payload.price));
       formData.append("stock", String(payload.stock));
       formData.append("is_active", String(payload.is_active));
-      formData.append("productImage", getFileMeta(payload.imageUri) as any);
+      appendFile(formData, "productImage", getFileMeta(payload.imageUri, "product"));
 
       const { data } = await api.post<CreateProductResponse>(
         "/products",
         formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PRODUCTS_KEY });
-      Alert.alert("Success", "Product created successfully");
+      notify.success("Product created");
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ?? "Failed to create product",
-      );
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to create product", errorMessage(error, "Try again."));
     },
   });
 };
 
 export const useUploadProductImage = () => {
-  const { token } = useAuthStore();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationKey: ["product", "upload-image"],
     mutationFn: async (payload: UploadProductImagePayload) => {
       const formData = new FormData();
-      formData.append("productImage", getFileMeta(payload.imageUri) as any);
+      appendFile(formData, "productImage", getFileMeta(payload.imageUri, "product"));
 
       const { data } = await api.put<UploadProductImageResponse>(
         `/products/product-image/${payload.productId}`,
         formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
 
       return data;
@@ -121,17 +95,13 @@ export const useUploadProductImage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PRODUCTS_KEY });
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ?? "Failed to upload product image",
-      );
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to upload image", errorMessage(error, "Try again."));
     },
   });
 };
 
 export const useUpdateProduct = () => {
-  const { token } = useAuthStore();
   const queryClient = useQueryClient();
   const uploadImage = useUploadProductImage();
 
@@ -148,11 +118,6 @@ export const useUpdateProduct = () => {
           stock: payload.stock,
           is_active: payload.is_active,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
       );
 
       if (payload.imageUri) {
@@ -166,19 +131,15 @@ export const useUpdateProduct = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PRODUCTS_KEY });
-      Alert.alert("Success", "Product updated successfully");
+      notify.success("Product updated");
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ?? "Failed to update product",
-      );
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to update product", errorMessage(error, "Try again."));
     },
   });
 };
 
 export const useDeleteProduct = () => {
-  const { token } = useAuthStore();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -186,24 +147,16 @@ export const useDeleteProduct = () => {
     mutationFn: async (payload: DeleteProductPayload) => {
       const { data } = await api.delete<DeleteProductResponse>(
         `/products/${payload.id}`,
-        {
-          data: { password: payload.password },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+        { data: { password: payload.password } },
       );
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PRODUCTS_KEY });
-      Alert.alert("Success", "Product deleted successfully");
+      notify.success("Product deleted");
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ?? "Failed to delete product",
-      );
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to delete product", errorMessage(error, "Try again."));
     },
   });
 };

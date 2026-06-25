@@ -14,7 +14,7 @@ import { SymbolView } from "expo-symbols";
 import { useRouter } from "expo-router";
 
 export default function AdminProducts() {
-  const { data: products, isLoading, refetch } = useGetProducts();
+  const { data: products, isLoading, refetch, isFetching } = useGetProducts();
   const deleteProduct = useDeleteProduct();
   const router = useRouter();
 
@@ -58,6 +58,8 @@ export default function AdminProducts() {
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
+        refreshing={isFetching && !isLoading}
+        onRefresh={refetch}
         renderItem={({ item }) => (
           <View className="bg-white dark:bg-zinc-800 p-3 rounded-2xl mb-4 mx-4 shadow-sm border border-gray-100 dark:border-zinc-700 flex-row items-center">
             <Image
