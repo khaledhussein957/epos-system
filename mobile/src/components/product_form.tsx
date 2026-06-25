@@ -12,88 +12,138 @@ import {
   Switch,
   ScrollView,
 } from "react-native";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Ionicons } from "@expo/vector-icons";
 
 import { ICategory, IProduct } from "@/types";
-import { useUpdateProduct } from "@/hooks/useProduct";
+import { useCreateProduct, useUpdateProduct } from "@/hooks/useProduct";
 import {
+  CreateProductInput,
   UpdateProductInput,
+  createProductSchema,
   updateProductSchema,
 } from "@/validations/product.validate";
 
-interface UpdateProductFormProps {
-  visible: boolean;
-  onClose: () => void;
-  product: IProduct | null;
-  categories: ICategory[];
-}
+type ProductFormProps =
+  | {
+      mode: "create";
+      visible: boolean;
+      onClose: () => void;
+      categories: ICategory[];
+      product?: never;
+    }
+  | {
+      mode: "update";
+      visible: boolean;
+      onClose: () => void;
+      categories: ICategory[];
+      product: IProduct | null;
+    };
 
-const UpdateProductForm = ({
-  visible,
-  onClose,
-  product,
-  categories,
-}: UpdateProductFormProps) => {
+type FormValues = CreateProductInput | UpdateProductInput;
+
+const createDefaults = (categories: ICategory[]): CreateProductInput => ({
+  name: "",
+  description: "",
+  category_id: categories[0]?.id ?? "",
+  price: 0,
+  stock: 0,
+  is_active: true,
+  imageUri: "",
+});
+
+const updateDefaultsFromProduct = (product: IProduct): UpdateProductInput => ({
+  name: product.name,
+  description: product.description,
+  category_id: product.category_id,
+  price: Number(product.price),
+  stock: Number(product.stock),
+  is_active: product.is_active,
+  imageUri: "",
+});
+
+export const ProductForm = (props: ProductFormProps) => {
+  const { mode, visible, onClose, categories } = props;
+  const product = mode === "update" ? props.product : null;
+
+  const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
+  const mutation = mode === "create" ? createProduct : updateProduct;
+
+  const schema = mode === "create" ? createProductSchema : updateProductSchema;
+  const defaultValues =
+    mode === "create"
+      ? createDefaults(categories)
+      : product
+        ? updateDefaultsFromProduct(product)
+        : createDefaults(categories);
 
   const {
     control,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
-  } = useForm<UpdateProductInput>({
-    resolver: zodResolver(updateProductSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      category_id: "",
-      price: 0,
-      stock: 0,
-      is_active: true,
-      imageUri: "",
-    },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema) as Resolver<FormValues>,
+    defaultValues,
   });
 
-  useEffect(() => {
-    if (!product) return;
+  const selectedCategory = watch("category_id");
 
-    reset({
-      name: product.name,
-      description: product.description,
-      category_id: product.category_id,
-      price: Number(product.price),
-      stock: product.stock,
-      is_active: product.is_active,
-      imageUri: "",
-    });
-  }, [product, reset]);
+  useEffect(() => {
+    if (mode === "create" && !selectedCategory && categories[0]?.id) {
+      setValue("category_id", categories[0].id);
+    }
+  }, [mode, categories, selectedCategory, setValue]);
+
+  useEffect(() => {
+    if (mode === "update" && product) {
+      reset(updateDefaultsFromProduct(product));
+    }
+  }, [mode, product, reset]);
 
   const handleClose = () => {
-    reset();
+    reset(mode === "create" ? createDefaults(categories) : undefined);
     onClose();
   };
 
-  const onSubmit = (data: UpdateProductInput) => {
-    if (!product) return;
+  const onSubmit = (data: FormValues) => {
+    if (mode === "create") {
+      createProduct.mutate(data as CreateProductInput, {
+        onSuccess: handleClose,
+      });
+      return;
+    }
 
+    if (!product) return;
+    const update = data as UpdateProductInput;
     updateProduct.mutate(
       {
         id: product.id,
-        name: data.name,
-        description: data.description,
-        category_id: data.category_id,
-        price: data.price,
-        stock: data.stock,
-        is_active: data.is_active,
-        imageUri: data.imageUri?.trim() ? data.imageUri.trim() : undefined,
+        name: update.name,
+        description: update.description,
+        category_id: update.category_id,
+        price: update.price,
+        stock: update.stock,
+        is_active: update.is_active,
+        imageUri: update.imageUri?.trim() ? update.imageUri.trim() : undefined,
       },
-      {
-        onSuccess: () => handleClose(),
-      },
+      { onSuccess: handleClose },
     );
   };
+
+  const title = mode === "create" ? "New Product" : "Edit Product";
+  const cta = mode === "create" ? "Create Product" : "Save Changes";
+  const helper =
+    mode === "create"
+      ? "Paste a local image URI like `file://...` until the app gets an image picker."
+      : "Leave image URI empty to keep the current image.";
+  const imageLabel = mode === "create" ? "Image URI" : "New Image URI";
+  const imagePlaceholder =
+    mode === "create" ? "file://..." : "file://... (optional)";
 
   return (
     <Modal
@@ -112,7 +162,7 @@ const UpdateProductForm = ({
 
           <View className="flex-row items-center justify-between mb-6">
             <Text className="text-xl font-bold text-black dark:text-white">
-              Edit Product
+              {title}
             </Text>
             <TouchableOpacity
               onPress={handleClose}
@@ -124,7 +174,7 @@ const UpdateProductForm = ({
 
           <ScrollView showsVerticalScrollIndicator={false}>
             <Text className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              Leave image URI empty to keep the current image.
+              {helper}
             </Text>
 
             <Controller
@@ -163,8 +213,8 @@ const UpdateProductForm = ({
               name="imageUri"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Field
-                  label="New Image URI"
-                  placeholder="file://... (optional)"
+                  label={imageLabel}
+                  placeholder={imagePlaceholder}
                   value={String(value ?? "")}
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -184,7 +234,6 @@ const UpdateProductForm = ({
                 <View className="flex-row flex-wrap gap-2 mb-2">
                   {categories.map((category) => {
                     const selected = value === category.id;
-
                     return (
                       <TouchableOpacity
                         key={category.id}
@@ -219,9 +268,9 @@ const UpdateProductForm = ({
                 <Field
                   label="Price"
                   placeholder="0.00"
-                  value={String(value ?? "")}
+                  value={value === 0 ? "" : String(value)}
                   onBlur={onBlur}
-                  onChangeText={onChange}
+                  onChangeText={(text) => onChange(text === "" ? 0 : Number(text))}
                   error={errors.price?.message}
                   keyboardType="decimal-pad"
                 />
@@ -235,9 +284,9 @@ const UpdateProductForm = ({
                 <Field
                   label="Stock"
                   placeholder="0"
-                  value={String(value ?? "")}
+                  value={value === 0 ? "" : String(value)}
                   onBlur={onBlur}
-                  onChangeText={onChange}
+                  onChangeText={(text) => onChange(text === "" ? 0 : Number(text))}
                   error={errors.stock?.message}
                   keyboardType="number-pad"
                 />
@@ -254,7 +303,7 @@ const UpdateProductForm = ({
                       Active Product
                     </Text>
                     <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Toggle availability for this product.
+                      Inactive products stay visible but can be marked off sale.
                     </Text>
                   </View>
                   <Switch value={value} onValueChange={onChange} />
@@ -264,15 +313,13 @@ const UpdateProductForm = ({
 
             <TouchableOpacity
               onPress={handleSubmit(onSubmit)}
-              disabled={updateProduct.isPending}
+              disabled={mutation.isPending || categories.length === 0}
               className="bg-primary py-4 rounded-xl items-center"
             >
-              {updateProduct.isPending ? (
+              {mutation.isPending ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text className="text-white font-semibold text-base">
-                  Save Changes
-                </Text>
+                <Text className="text-white font-semibold text-base">{cta}</Text>
               )}
             </TouchableOpacity>
           </ScrollView>
@@ -325,4 +372,4 @@ const Field = ({
   </View>
 );
 
-export default UpdateProductForm;
+export default ProductForm;

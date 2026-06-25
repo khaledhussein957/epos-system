@@ -12,7 +12,7 @@ import { format } from "date-fns";
 import { SymbolView } from "expo-symbols";
 
 export default function AdminOrders() {
-  const { data: orders, isLoading } = useGetOrders();
+  const { data: orders, isLoading, refetch, isFetching } = useGetOrders();
 
   if (isLoading) {
     return (
@@ -32,6 +32,8 @@ export default function AdminOrders() {
         <FlatList
           data={orders}
           keyExtractor={(item) => item.id.toString()}
+          refreshing={isFetching && !isLoading}
+          onRefresh={refetch}
           renderItem={({ item }) => (
             <TouchableOpacity className="bg-white dark:bg-zinc-800 p-4 rounded-2xl mb-4 shadow-sm border border-gray-100 dark:border-zinc-700">
               <View className="flex-row justify-between items-center mb-2">

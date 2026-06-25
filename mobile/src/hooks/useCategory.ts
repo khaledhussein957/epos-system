@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { Alert, Platform } from "react-native";
 
 import { api } from "../lib/axios";
-import { useAuthStore } from "../store/auth.store";
+import { appendFile, getFileMeta } from "../lib/formData";
+import { notify } from "../lib/notify";
 
 import {
   CreateCategoryPayload,
@@ -17,122 +17,86 @@ import { ICategory } from "../types";
 
 const CATEGORIES_KEY = ["categories"];
 
-const getFileMeta = (uri: string) => {
-  const segments = uri.split("/");
-  const name = segments[segments.length - 1] || `category-${Date.now()}.jpg`;
-  const ext = name.split(".").pop()?.toLowerCase();
-  const type =
-    ext === "png" ? "image/png" : ext === "gif" ? "image/gif" : "image/jpeg";
-
-  return { uri, name, type };
-};
+const errorMessage = (error: AxiosError<{ message?: string }>, fallback: string) =>
+  error.response?.data?.message ?? fallback;
 
 export const useGetCategories = () => {
-  const { token } = useAuthStore();
-
   return useQuery<ICategory[]>({
     queryKey: CATEGORIES_KEY,
     queryFn: async () => {
-      const { data } = await api.get<{ categories: ICategory[] }>(
-        "/categories",
-        token
-          ? {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          : undefined,
-      );
+      const { data } = await api.get<{ categories: ICategory[] }>("/categories");
       return data.categories;
     },
   });
 };
 
+type OptimisticCategory = ICategory & { optimistic?: boolean };
+
 export const useCreateCategory = () => {
-  const { token } = useAuthStore();
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<
+    CreateCategoryResponse,
+    AxiosError<{ message?: string }>,
+    CreateCategoryPayload,
+    { previousCategories?: OptimisticCategory[] }
+  >({
     mutationKey: ["category", "create"],
 
-    // ⚡ OPTIMISTIC UPDATE
-    onMutate: async (payload: CreateCategoryPayload) => {
-      await queryClient.cancelQueries({ queryKey: ["categories"] });
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey: CATEGORIES_KEY });
 
-      const previousCategories = queryClient.getQueryData<any[]>([
-        "categories",
-      ]);
+      const previousCategories =
+        queryClient.getQueryData<OptimisticCategory[]>(CATEGORIES_KEY);
 
-      const optimisticCategory = {
+      const optimisticCategory: OptimisticCategory = {
         id: `temp-${Date.now()}`,
         name: payload.name,
         image_url: payload.image_url.uri,
         optimistic: true,
-      };
+      } as OptimisticCategory;
 
-      queryClient.setQueryData(["categories"], (old: any[] = []) => [
-        optimisticCategory,
-        ...old,
-      ]);
+      queryClient.setQueryData<OptimisticCategory[]>(
+        CATEGORIES_KEY,
+        (old = []) => [optimisticCategory, ...old],
+      );
 
       return { previousCategories };
     },
 
-    mutationFn: async (payload: CreateCategoryPayload) => {
-      if (!token) throw new Error("No auth token");
-
+    mutationFn: async (payload) => {
       const formData = new FormData();
-      const fileUri =
-        Platform.OS === "android"
-          ? payload.image_url.uri
-          : payload.image_url.uri.replace("file://", "");
-
       formData.append("name", payload.name);
-      formData.append("categoryImage", {
-        uri: fileUri,
-        name: payload.image_url.name,
-        type: payload.image_url.type,
-      } as any);
+      appendFile(formData, "categoryImage", payload.image_url);
 
       const { data } = await api.post<CreateCategoryResponse>(
         "/categories",
         formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
 
       return data;
     },
 
-    // ✅ FIX REAL DATA AFTER SUCCESS
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: CATEGORIES_KEY });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
 
-    // ❌ ROLLBACK ON ERROR
-    onError: (error: any, _payload, context: any) => {
+    onError: (error, _payload, context) => {
       if (context?.previousCategories) {
-        queryClient.setQueryData(["categories"], context.previousCategories);
+        queryClient.setQueryData(CATEGORIES_KEY, context.previousCategories);
       }
-
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ?? "Failed to create category",
-      );
+      notify.error("Failed to create category", errorMessage(error, "Try again."));
     },
 
-    // 🔄 FINAL SYNC
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: CATEGORIES_KEY });
     },
   });
 };
 
 export const useUpdateCategory = () => {
-  const { token } = useAuthStore();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -142,36 +106,27 @@ export const useUpdateCategory = () => {
       formData.append("name", payload.name);
 
       if (payload.image_url) {
-        formData.append("categoryImage", getFileMeta(payload.image_url) as any);
+        appendFile(formData, "categoryImage", getFileMeta(payload.image_url, "category"));
       }
 
       const { data } = await api.put<UpdateCategoryResponse>(
         `/categories/${payload.id}`,
         formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORIES_KEY });
-      Alert.alert("Success", "Category updated successfully");
+      notify.success("Category updated");
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ?? "Failed to update category",
-      );
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to update category", errorMessage(error, "Try again."));
     },
   });
 };
 
 export const useDeleteCategory = () => {
-  const { token } = useAuthStore();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -179,22 +134,16 @@ export const useDeleteCategory = () => {
     mutationFn: async (payload: DeleteCategoryPayload) => {
       const { data } = await api.delete<DeleteCategoryResponse>(
         `/categories/${payload.id}`,
-        {
-          data: { password: payload.password },
-          headers: { Authorization: `Bearer ${token}` },
-        },
+        { data: { password: payload.password } },
       );
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CATEGORIES_KEY });
-      Alert.alert("Success", "Category deleted successfully");
+      notify.success("Category deleted");
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert(
-        "Error",
-        error.response?.data?.message ?? "Failed to delete category",
-      );
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to delete category", errorMessage(error, "Try again."));
     },
   });
 };

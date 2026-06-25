@@ -74,7 +74,7 @@ const CategoryCard = ({
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => onDelete(category.id as any)}
+            onPress={() => onDelete(category)}
             className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-900/30 items-center justify-center"
             accessibilityLabel={`Delete ${category.name}`}
           >

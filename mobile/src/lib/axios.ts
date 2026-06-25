@@ -1,5 +1,8 @@
+import axios, { AxiosError } from "axios";
+import { router } from "expo-router";
+
 import { useAuthStore } from "@/store/auth.store";
-import axios from "axios";
+import { notify } from "@/lib/notify";
 
 const baseUrl = process.env.EXPO_PUBLIC_API_URL;
 
@@ -17,3 +20,25 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<{ message?: string }>) => {
+    const status = error.response?.status;
+
+    if (status === 401 || status === 403) {
+      const { isAuthenticated, logout } = useAuthStore.getState();
+      if (isAuthenticated) {
+        logout();
+        notify.error("Session expired", "Please sign in again.");
+        router.replace("/(auth)");
+      }
+    }
+
+    if (!error.response) {
+      notify.error("Network error", "Check your internet connection.");
+    }
+
+    return Promise.reject(error);
+  },
+);

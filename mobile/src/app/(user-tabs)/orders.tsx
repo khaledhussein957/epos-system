@@ -10,7 +10,7 @@ import { useGetMyOrders } from "@/hooks/useOrder";
 import { format } from "date-fns";
 
 export default function OrdersScreen() {
-  const { data: orders, isLoading, error } = useGetMyOrders();
+  const { data: orders, isLoading, refetch, isFetching } = useGetMyOrders();
 
   if (isLoading) {
     return (
@@ -30,6 +30,8 @@ export default function OrdersScreen() {
         <FlatList
           data={orders}
           keyExtractor={(item) => item.id.toString()}
+          refreshing={isFetching && !isLoading}
+          onRefresh={refetch}
           renderItem={({ item }) => (
             <View className="bg-white dark:bg-zinc-800 p-4 rounded-2xl mb-4 shadow-sm border border-gray-100 dark:border-zinc-700">
               <View className="flex-row justify-between items-center mb-2">
