@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
 
@@ -35,7 +35,7 @@ export const useRegister = () => {
       return data;
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.token);
+      setAuth(data.user, data.token, data.refreshToken);
       router.replace(data.user.role === "admin" ? "/(admin-tabs)" : "/(user-tabs)");
     },
     onError: (error: AxiosError<{ message?: string }>) => {
@@ -55,7 +55,7 @@ export const useLogin = () => {
       return data;
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.token);
+      setAuth(data.user, data.token, data.refreshToken);
       router.replace(data.user.role === "admin" ? "/(admin-tabs)" : "/(user-tabs)");
     },
     onError: (error: AxiosError<{ message?: string }>) => {
@@ -85,6 +85,30 @@ export const useRecoveryPassword = () => {
     },
     onError: (error: AxiosError<{ message?: string }>) => {
       notify.error("Failed to send code", errorMessage(error, "Try again."));
+    },
+  });
+};
+
+export const useLogout = () => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ["auth", "logout"],
+    mutationFn: async () => {
+      const { refreshToken } = useAuthStore.getState();
+      try {
+        if (refreshToken) {
+          await api.post("/auth/logout", { refreshToken });
+        }
+      } catch {
+        // Server revocation failed; we still log out locally.
+      }
+    },
+    onSettled: () => {
+      useAuthStore.getState().logout();
+      queryClient.clear();
+      router.replace("/(auth)");
     },
   });
 };

@@ -13,12 +13,15 @@ export const comparePassword = async (password: string, hash: string) => {
   return await bcrypt.compare(password, hash);
 };
 
+export const ACCESS_TOKEN_TTL = "15m";
+export const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
 export const generateToken = (id: string, role: string) => {
   if (!ENV.JWT_SECRET) {
     throw new Error("JWT_SECRET is not configured");
   }
   return jwt.sign({ id, role }, ENV.JWT_SECRET, {
-    expiresIn: "1d",
+    expiresIn: ACCESS_TOKEN_TTL,
   });
 };
 export const verifyToken = (token: string) => {
@@ -27,6 +30,18 @@ export const verifyToken = (token: string) => {
   }
 
   return jwt.verify(token, ENV.JWT_SECRET as string);
+};
+
+export const generateRefreshToken = (): string => {
+  return crypto.randomBytes(48).toString("base64url");
+};
+
+export const hashRefreshToken = (token: string): string => {
+  return crypto.createHash("sha256").update(token).digest("hex");
+};
+
+export const refreshTokenExpiry = (): Date => {
+  return new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
 };
 
 export const generateResetPasswordCode = async (): Promise<string> => {

@@ -11,6 +11,7 @@ export interface RegisterResponse {
   message: string;
   user: IUser;
   token: string;
+  refreshToken: string;
 }
 
 export interface LoginPayload {
@@ -21,7 +22,13 @@ export interface LoginPayload {
 export interface LoginResponse {
   message: string;
   token: string;
+  refreshToken: string;
   user: IUser;
+}
+
+export interface RefreshResponse {
+  token: string;
+  refreshToken: string;
 }
 
 export interface recoveryPasswordPayload {
