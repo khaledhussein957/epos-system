@@ -31,7 +31,7 @@ export const useRegister = () => {
       return data;
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.token);
+      setAuth(data.user, data.token, data.refreshToken);
       if (data.user.role === "admin") {
         router.push("/(admin-tabs)");
       } else {
@@ -56,7 +56,7 @@ export const useLogin = () => {
       return data;
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.token);
+      setAuth(data.user, data.token, data.refreshToken);
       if (data.user.role === "admin") {
         router.push("/(admin-tabs)");
       } else {
@@ -94,6 +94,30 @@ export const useRecoveryPassword = () => {
     },
     onError: (error: AxiosError<{ message: string }>) => {
       Alert.alert("Error", error.response?.data.message);
+    },
+  });
+};
+
+export const useLogout = () => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ["auth", "logout"],
+    mutationFn: async () => {
+      const { refreshToken } = useAuthStore.getState();
+      try {
+        if (refreshToken) {
+          await api.post("/auth/logout", { refreshToken });
+        }
+      } catch {
+        // Server revocation failed; we still log out locally.
+      }
+    },
+    onSettled: () => {
+      useAuthStore.getState().logout();
+      queryClient.clear();
+      router.replace("/(auth)");
     },
   });
 };
