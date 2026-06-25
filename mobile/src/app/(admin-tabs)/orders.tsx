@@ -41,7 +41,7 @@ export default function AdminOrders() {
                   Order #{item.id}
                 </Text>
                 <Text className="text-primary font-semibold">
-                  ${item.items?.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0) || 0}
+                  ${item.items?.reduce((acc, curr) => acc + Number(curr.price) * curr.quantity, 0) || 0}
                 </Text>
               </View>
               

@@ -57,12 +57,12 @@ export const create_product = async (
         name,
         description,
         category_id,
-        price: price.toString(),
-        stock: stock.toString(),
+        price: price.toFixed(2),
+        stock,
         is_active: isActive,
         image_url: UploadResult.secure_url,
         image_public_id: UploadResult.public_id,
-        qr_code: "", // ✅ placeholder
+        qr_code: "",
       })
       .returning();
 
@@ -136,8 +136,8 @@ export const update_product = async (
         name,
         description,
         category_id,
-        price: price?.toString() ?? existingProduct.price.toString(),
-        stock: stock?.toString() ?? existingProduct.stock.toString(),
+        price: price != null ? price.toFixed(2) : existingProduct.price,
+        stock: stock != null ? stock : existingProduct.stock,
         is_active,
         image_url: existingProduct.image_url,
         qr_code: "",

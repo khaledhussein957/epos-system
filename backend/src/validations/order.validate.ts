@@ -19,9 +19,10 @@ export const createOrderSchema = z
       .array(
         z.object({
           product_id: z.string().uuid(),
-          quantity: z.string().refine((val) => /^[1-9]\d*$/.test(val), {
-            message: "Quantity must be a positive integer",
-          }),
+          quantity: z.coerce
+            .number()
+            .int("Quantity must be a whole number")
+            .positive("Quantity must be a positive integer"),
         }),
       )
       .min(1, "At least one item is required"),

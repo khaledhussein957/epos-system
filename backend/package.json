@@ -7,7 +7,9 @@
     "dev": "bun --watch index.ts",
     "start": "bun index.ts",
     "build": "bun install",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
