@@ -57,8 +57,8 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       name,
       description,
       category_id,
-      price as any,
-      stock as any,
+      Number(price),
+      Number(stock),
       is_active,
       image,
     );
@@ -154,8 +154,8 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
       name!,
       description!,
       category_id!,
-      price as any,
-      stock!,
+      Number(price),
+      Number(stock),
       is_active!,
       productId as string,
     );

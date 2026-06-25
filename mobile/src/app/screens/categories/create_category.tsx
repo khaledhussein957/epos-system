@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   Pressable,
   Image,
-  Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import Animated, {
@@ -24,6 +23,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useCreateCategory } from "@/hooks/useCategory";
+import { notify } from "@/lib/notify";
+import { getFileMeta } from "@/lib/formData";
 import {
   CreateCategoryInput,
   createCategorySchema,
@@ -87,10 +88,8 @@ const CreateCategoryForm = ({ visible, onClose }: CreateCategoryFormProps) => {
 
     if (!result.canceled) {
       const asset = result.assets[0];
-
       setImage(asset.uri);
-
-      setValue("image_url", asset.uri as any); // keep schema consistent
+      setValue("image_url", asset.uri);
     }
   };
 
@@ -111,24 +110,14 @@ const CreateCategoryForm = ({ visible, onClose }: CreateCategoryFormProps) => {
 
     if (!image) {
       triggerShake();
-      Alert.alert("Error", "Please select an image");
+      notify.error("Please select an image");
       return;
     }
-
-    const segments = image.split("/");
-    const name = segments[segments.length - 1] || `category-${Date.now()}.jpg`;
-    const ext = name.split(".").pop()?.toLowerCase();
-    const type =
-      ext === "png" ? "image/png" : ext === "gif" ? "image/gif" : "image/jpeg";
 
     createCategory.mutate(
       {
         name: data.name,
-        image_url: {
-          uri: image,
-          name,
-          type,
-        },
+        image_url: getFileMeta(image, "category"),
       },
       {
         onSuccess: handleClose,

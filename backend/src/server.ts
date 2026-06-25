@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 
 import { ENV } from "./config/env";
 
@@ -13,6 +14,8 @@ import orderRoute from "./routes/order.route";
 import dashboardRoute from "./routes/dashboard.route";
 
 const app = express();
+
+app.use(helmet());
 
 app.use(
   cors({

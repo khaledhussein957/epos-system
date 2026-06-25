@@ -8,6 +8,15 @@ import { products as productTable } from "../models/product.model";
 import { categories as categoryTable } from "../models/category.model";
 
 import { generateProductQrCode } from "../utils/product.util";
+import { AppError } from "../utils/AppError";
+
+const safeUnlink = async (filePath: string) => {
+  try {
+    await unlink(filePath);
+  } catch (error) {
+    console.error("Error deleting local file:", error);
+  }
+};
 
 export const create_product = async (
   name: string,
@@ -16,7 +25,7 @@ export const create_product = async (
   price: number,
   stock: number,
   isActive: boolean,
-  productImage: any,
+  productImage: string,
 ) => {
   // 📂 Check category exists
   const category = await db.query.categories.findFirst({
@@ -24,23 +33,19 @@ export const create_product = async (
   });
 
   if (!category) {
-    const err = new Error("Category not found") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    await safeUnlink(productImage);
+    throw new AppError("Category not found", 404);
   }
 
-  const UploadResult = await cloudinary.uploader.upload(productImage, {
-    folder: "product_images",
-    resource_type: "image",
-  });
-
-  // clean up local file after upload
+  let UploadResult;
   try {
-    await unlink(productImage);
-  } catch (error) {
-    console.error("Error deleting local file:", error);
+    UploadResult = await cloudinary.uploader.upload(productImage, {
+      folder: "product_images",
+      resource_type: "image",
+    });
+  } finally {
+    // clean up local file regardless of upload outcome
+    await safeUnlink(productImage);
   }
 
   // 💾 Transaction (safe + consistent)
@@ -52,12 +57,12 @@ export const create_product = async (
         name,
         description,
         category_id,
-        price: price.toString(),
-        stock: stock.toString(),
+        price: price.toFixed(2),
+        stock,
         is_active: isActive,
         image_url: UploadResult.secure_url,
         image_public_id: UploadResult.public_id,
-        qr_code: "", // ✅ placeholder
+        qr_code: "",
       })
       .returning();
 
@@ -89,11 +94,7 @@ export const get_product_by_id = async (productId: string) => {
   });
 
   if (!product) {
-    const err = new Error("Product not found") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("Product not found", 404);
   }
 
   return product;
@@ -114,25 +115,17 @@ export const update_product = async (
   });
 
   if (!existingProduct) {
-    const err = new Error("Product not found") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("Product not found", 404);
   }
 
-  // Check if category exists    if (category_id) {
+  // Check if category exists
   if (category_id) {
     const category = await db.query.categories.findFirst({
       where: eq(categoryTable.id, category_id),
     });
 
     if (!category) {
-      const err = new Error("Category not found") as Error & {
-        status?: number;
-      };
-      err.status = 404;
-      throw err;
+      throw new AppError("Category not found", 404);
     }
   }
 
@@ -143,8 +136,8 @@ export const update_product = async (
         name,
         description,
         category_id,
-        price: price?.toString() ?? existingProduct.price.toString(),
-        stock: stock?.toString() ?? existingProduct.stock.toString(),
+        price: price != null ? price.toFixed(2) : existingProduct.price,
+        stock: stock != null ? stock : existingProduct.stock,
         is_active,
         image_url: existingProduct.image_url,
         qr_code: "",
@@ -175,11 +168,8 @@ export const upload_product_image = async (
   });
 
   if (!product) {
-    const err = new Error("Product not found") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    await safeUnlink(filePath);
+    throw new AppError("Product not found", 404);
   }
 
   // delete previous image
@@ -191,16 +181,14 @@ export const upload_product_image = async (
     }
   }
 
-  const result = await cloudinary.uploader.upload(filePath, {
-    folder: "products",
-    public_id: `${product.id}_${Date.now()}`,
-  });
-
-  // delete local file
+  let result;
   try {
-    await unlink(filePath);
-  } catch (error) {
-    console.error("Error deleting local file:", error);
+    result = await cloudinary.uploader.upload(filePath, {
+      folder: "products",
+      public_id: `${product.id}_${Date.now()}`,
+    });
+  } finally {
+    await safeUnlink(filePath);
   }
 
   const [updatedProduct] = await db
@@ -221,11 +209,7 @@ export const delete_product = async (productId: string) => {
   });
 
   if (!product) {
-    const err = new Error("Product not found") as Error & {
-      status?: number;
-    };
-    err.status = 404;
-    throw err;
+    throw new AppError("Product not found", 404);
   }
 
   // 🖼️ Delete image from Cloudinary

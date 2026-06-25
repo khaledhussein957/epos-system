@@ -1,9 +1,9 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
-import { Alert } from "react-native";
 
 import { api } from "../lib/axios";
+import { notify } from "../lib/notify";
 import { useAuthStore } from "../store/auth.store";
 import {
   RegisterPayload,
@@ -16,9 +16,13 @@ import {
   ResetPasswordResponse,
 } from "../types/auth.types";
 
+const errorMessage = (
+  error: AxiosError<{ message?: string }>,
+  fallback: string,
+) => error.response?.data?.message ?? fallback;
+
 export const useRegister = () => {
   const router = useRouter();
-
   const { setAuth } = useAuthStore();
 
   return useMutation({
@@ -31,22 +35,17 @@ export const useRegister = () => {
       return data;
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.token, data.refreshToken);
-      if (data.user.role === "admin") {
-        router.push("/(admin-tabs)");
-      } else {
-        router.push("/(user-tabs)");
-      }
+      setAuth(data.user, data.token);
+      router.replace(data.user.role === "admin" ? "/(admin-tabs)" : "/(user-tabs)");
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert("Error", error.response?.data.message);
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Registration failed", errorMessage(error, "Try again."));
     },
   });
 };
 
 export const useLogin = () => {
   const router = useRouter();
-
   const { setAuth } = useAuthStore();
 
   return useMutation({
@@ -56,15 +55,11 @@ export const useLogin = () => {
       return data;
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.token, data.refreshToken);
-      if (data.user.role === "admin") {
-        router.push("/(admin-tabs)");
-      } else {
-        router.push("/(user-tabs)");
-      }
+      setAuth(data.user, data.token);
+      router.replace(data.user.role === "admin" ? "/(admin-tabs)" : "/(user-tabs)");
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert("Error", error.response?.data.message);
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Sign in failed", errorMessage(error, "Check your credentials."));
     },
   });
 };
@@ -82,18 +77,14 @@ export const useRecoveryPassword = () => {
       return data;
     },
     onSuccess: (_, variables) => {
-      Alert.alert(
-        "Success",
-        "A password reset code has been sent to your email",
-      );
-
+      notify.success("Reset code sent", "Check your email.");
       router.push({
         pathname: "/(auth)/verify_code",
         params: { email: variables.email },
       });
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert("Error", error.response?.data.message);
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Failed to send code", errorMessage(error, "Try again."));
     },
   });
 };
@@ -134,11 +125,11 @@ export const useResetPassword = () => {
       return data;
     },
     onSuccess: () => {
-      Alert.alert("Success", "Your password has been reset");
-      router.push("/(auth)");
+      notify.success("Password reset successful");
+      router.replace("/(auth)");
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      Alert.alert("Error", error.response?.data.message);
+    onError: (error: AxiosError<{ message?: string }>) => {
+      notify.error("Reset failed", errorMessage(error, "Try again."));
     },
   });
 };

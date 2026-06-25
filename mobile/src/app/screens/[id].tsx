@@ -5,13 +5,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
-  Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { SymbolView } from "expo-symbols";
 import { useGetProduct } from "@/hooks/useProduct";
 import { useCartStore } from "@/store/cart.store";
+import { notify } from "@/lib/notify";
 
 const ProductDetailsScreen = () => {
   const router = useRouter();
@@ -117,7 +117,7 @@ const ProductDetailsScreen = () => {
         <TouchableOpacity 
           onPress={() => {
             addItem(product);
-            Alert.alert("Success", "Added to cart!");
+            notify.success("Added to cart");
           }}
           className="flex-1 h-14 bg-gray-100 dark:bg-zinc-800 rounded-2xl items-center justify-center"
         >

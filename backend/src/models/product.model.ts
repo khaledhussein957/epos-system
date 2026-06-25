@@ -7,7 +7,7 @@ import {
   integer,
   boolean,
   index,
-  decimal,
+  numeric,
 } from "drizzle-orm/pg-core";
 
 import { categories } from "./category.model";
@@ -23,8 +23,8 @@ export const products = pgTable(
       .notNull()
       .references(() => categories.id),
 
-    price: text("price").notNull(),
-    stock: text("stock").notNull(),
+    price: numeric("price", { precision: 12, scale: 2 }).notNull(),
+    stock: integer("stock").notNull().default(0),
     is_active: boolean("is_active").default(true).notNull(),
     image_url: text("image_url"),
     image_public_id: text("image_public_id"),

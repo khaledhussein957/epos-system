@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { AxiosError } from "axios";
 
 import { api } from "../lib/axios";
 import { useAuthStore } from "../store/auth.store";
@@ -18,15 +17,14 @@ type ApiResponse<T> = {
 };
 
 export const useGetDashboard = () => {
-  const { token } = useAuthStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return useQuery({
     queryKey: ["dashboard"],
-    enabled: !!token,
+    enabled: isAuthenticated,
     queryFn: async () => {
       const res = await api.get<ApiResponse<DashboardResponse>>("/dashboard");
-
-      return res.data.data; // 👈 THIS FIXES EVERYTHING
+      return res.data.data;
     },
     staleTime: 1000 * 30,
   });

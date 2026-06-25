@@ -45,8 +45,7 @@ export const refreshTokenExpiry = (): Date => {
 };
 
 export const generateResetPasswordCode = async (): Promise<string> => {
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  return code;
+  return crypto.randomInt(100000, 1000000).toString();
 };
 
 export const resetPasswordCodeExpiration = (minutes: number): Date => {

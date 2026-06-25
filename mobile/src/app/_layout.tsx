@@ -1,14 +1,18 @@
 import { Stack } from "expo-router";
+import Toast from "react-native-toast-message";
 
 import "../../global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
+
+import { OfflineBanner } from "@/components/OfflineBanner";
 
 const queryClient = new QueryClient();
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <StatusBar style="auto" />
+      <OfflineBanner />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -19,6 +23,7 @@ export default function RootLayout() {
         <Stack.Screen name="(admin-tabs)" />
         <Stack.Screen name="screens" />
       </Stack>
+      <Toast />
     </QueryClientProvider>
   );
 }
