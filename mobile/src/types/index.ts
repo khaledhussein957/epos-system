@@ -63,7 +63,7 @@ export interface IOrderItem {
   product_id: number;
 
   quantity: number;
-  price: number;
+  price: number | string;
 
   created_at: Date;
   updated_at: Date;

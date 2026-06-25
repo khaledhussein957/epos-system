@@ -89,14 +89,14 @@ export const processTransaction = async (
         throw new AppError("Product not found", 404);
       }
 
-      if (Number(product.stock) < Number(item.quantity)) {
+      if (product.stock < item.quantity) {
         throw new AppError(
           `Insufficient stock for product: ${product.name}`,
           409,
         );
       }
 
-      totalAmount += Number(product.price) * Number(item.quantity);
+      totalAmount += Number(product.price) * item.quantity;
     }
 
     // 3. Create Order
@@ -123,7 +123,7 @@ export const processTransaction = async (
         order_id: newOrder.id,
         product_id: item.product_id,
         quantity: item.quantity,
-        price: Math.round(Number(product.price) * 100), // Storing as cents in order_items if it's integer
+        price: Number(product.price).toFixed(2),
       });
 
       await tx

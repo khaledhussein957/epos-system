@@ -61,9 +61,9 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       paymentMethod: order.payment_method,
       items: order.orderItems.map((oi) => ({
         name: oi.product.name,
-        quantity: Number(oi.quantity),
-        price: parseFloat(oi.product.price),
-        subtotal: parseFloat(oi.product.price) * Number(oi.quantity),
+        quantity: oi.quantity,
+        price: parseFloat(oi.price),
+        subtotal: parseFloat(oi.price) * oi.quantity,
       })),
       total: parseFloat(order.total),
     };
