@@ -4,7 +4,9 @@ import {
   registerUser,
   loginUser,
   recoveryPassword,
+  refreshSession,
   resetPassword,
+  revokeRefreshToken,
 } from "../services/auth.service";
 
 import { formatZodError } from "../utils/validation.util";
@@ -110,6 +112,39 @@ export const recoverPasswordAccount = async (req: Request, res: Response) => {
     res.status(500).json({
       message: error.message || "Password recovery failed",
     });
+  }
+};
+
+export const refreshAccount = async (req: Request, res: Response) => {
+  try {
+    const refreshToken = (req.body?.refreshToken as string | undefined)?.trim();
+    if (!refreshToken) {
+      return res.status(400).json({ message: "refreshToken is required" });
+    }
+
+    const result = await refreshSession(refreshToken);
+    return res.json(result);
+  } catch (error: any) {
+    console.log("Error in refresh account:", error);
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    return res
+      .status(500)
+      .json({ message: error.message || "Refresh failed" });
+  }
+};
+
+export const logoutAccount = async (req: Request, res: Response) => {
+  try {
+    const refreshToken = (req.body?.refreshToken as string | undefined)?.trim();
+    await revokeRefreshToken(refreshToken ?? "");
+    return res.json({ message: "Logged out" });
+  } catch (error: any) {
+    console.log("Error in logout account:", error);
+    return res
+      .status(500)
+      .json({ message: error.message || "Logout failed" });
   }
 };
 

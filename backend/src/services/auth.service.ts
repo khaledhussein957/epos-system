@@ -1,15 +1,19 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, gt } from "drizzle-orm";
 
 import { db } from "../config/db";
 
 import { users } from "../models/user.model";
+import { refreshTokens } from "../models/refreshToken.model";
 
 import {
   comparePassword,
+  generateRefreshToken,
   generateResetPasswordCode,
   generateToken,
   hashPassword,
+  hashRefreshToken,
   isResetPasswordCodeExpired,
+  refreshTokenExpiry,
   resetPasswordCodeExpiration,
 } from "../utils/auth.util";
 import { AppError } from "../utils/AppError";
@@ -18,6 +22,19 @@ import {
   sendResetPasswordEmail,
   sendSuccessResetPasswordEmail,
 } from "../emails/emailHandler";
+
+const issueSession = async (userId: string, role: string) => {
+  const accessToken = generateToken(userId, role);
+  const refreshToken = generateRefreshToken();
+
+  await db.insert(refreshTokens).values({
+    user_id: userId,
+    token_hash: hashRefreshToken(refreshToken),
+    expires_at: refreshTokenExpiry(),
+  });
+
+  return { accessToken, refreshToken };
+};
 
 export const registerUser = async (
   name: string,
@@ -59,12 +76,13 @@ export const registerUser = async (
     throw new AppError("Failed to create user", 500);
   }
 
-  const userToken = generateToken(user.id, user.role);
+  const { accessToken, refreshToken } = await issueSession(user.id, user.role);
   const now = new Date();
 
   return {
     message: "Registration successful",
-    token: userToken,
+    token: accessToken,
+    refreshToken,
     user: {
       _id: user.id,
       name: user.name,
@@ -105,11 +123,12 @@ export const loginUser = async (email: string, password: string) => {
 
   await db.update(users).set({ lastLogin: now }).where(eq(users.id, user.id));
 
-  const userToken = generateToken(user.id, user.role);
+  const { accessToken, refreshToken } = await issueSession(user.id, user.role);
 
   return {
     message: "Login successful",
-    token: userToken,
+    token: accessToken,
+    refreshToken,
     user: {
       _id: user.id, // Map id to _id for compatibility
       name: user.name,
@@ -250,4 +269,76 @@ export const resetPassword = async (
   return {
     message: "Password reset successful",
   };
+};
+
+export const refreshSession = async (presentedToken: string) => {
+  if (!presentedToken) {
+    const err = new Error("Refresh token is required") as Error & {
+      status?: number;
+    };
+    err.status = 400;
+    throw err;
+  }
+
+  const tokenHash = hashRefreshToken(presentedToken);
+  const now = new Date();
+
+  const stored = await db.query.refreshTokens.findFirst({
+    where: and(
+      eq(refreshTokens.token_hash, tokenHash),
+      isNull(refreshTokens.revoked_at),
+      gt(refreshTokens.expires_at, now),
+    ),
+  });
+
+  if (!stored) {
+    const err = new Error("Invalid or expired refresh token") as Error & {
+      status?: number;
+    };
+    err.status = 401;
+    throw err;
+  }
+
+  const user = await db.query.users.findFirst({
+    where: (u, { eq }) => eq(u.id, stored.user_id),
+  });
+
+  if (!user || user.isBlock) {
+    await db
+      .update(refreshTokens)
+      .set({ revoked_at: now })
+      .where(eq(refreshTokens.id, stored.id));
+
+    const err = new Error("Account no longer active") as Error & {
+      status?: number;
+    };
+    err.status = 401;
+    throw err;
+  }
+
+  // Rotate: revoke the presented token, issue a new pair.
+  await db
+    .update(refreshTokens)
+    .set({ revoked_at: now })
+    .where(eq(refreshTokens.id, stored.id));
+
+  const { accessToken, refreshToken } = await issueSession(user.id, user.role);
+
+  return { token: accessToken, refreshToken };
+};
+
+export const revokeRefreshToken = async (presentedToken: string) => {
+  if (!presentedToken) return;
+
+  const tokenHash = hashRefreshToken(presentedToken);
+
+  await db
+    .update(refreshTokens)
+    .set({ revoked_at: new Date() })
+    .where(
+      and(
+        eq(refreshTokens.token_hash, tokenHash),
+        isNull(refreshTokens.revoked_at),
+      ),
+    );
 };

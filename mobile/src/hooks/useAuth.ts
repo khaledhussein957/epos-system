@@ -89,6 +89,30 @@ export const useRecoveryPassword = () => {
   });
 };
 
+export const useLogout = () => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationKey: ["auth", "logout"],
+    mutationFn: async () => {
+      const { refreshToken } = useAuthStore.getState();
+      try {
+        if (refreshToken) {
+          await api.post("/auth/logout", { refreshToken });
+        }
+      } catch {
+        // Server revocation failed; we still log out locally.
+      }
+    },
+    onSettled: () => {
+      useAuthStore.getState().logout();
+      queryClient.clear();
+      router.replace("/(auth)");
+    },
+  });
+};
+
 export const useResetPassword = () => {
   const router = useRouter();
   return useMutation({

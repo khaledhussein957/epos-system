@@ -2,7 +2,9 @@ import { Router } from "express";
 
 import {
   loginAccount,
+  logoutAccount,
   recoverPasswordAccount,
+  refreshAccount,
   registerAccount,
   resetPasswordAccount,
 } from "../controllers/auth.controller";

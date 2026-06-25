@@ -4,7 +4,6 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import { IUser } from "../types";
 
-// Zustand-compatible storage adapter using expo-secure-store
 const secureStorage = {
   getItem: (name: string) => SecureStore.getItemAsync(name),
   setItem: (name: string, value: string) =>
@@ -15,9 +14,11 @@ const secureStorage = {
 export interface IAuthStore {
   user: IUser | null;
   token: string | null;
-  logout: () => void;
+  refreshToken: string | null;
   isAuthenticated: boolean;
-  setAuth: (user: IUser, token: string) => void;
+  setAuth: (user: IUser, token: string, refreshToken: string) => void;
+  setTokens: (token: string, refreshToken: string) => void;
+  logout: () => void;
 }
 
 export const useAuthStore = create<IAuthStore>()(
@@ -25,10 +26,18 @@ export const useAuthStore = create<IAuthStore>()(
     (set) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
-      setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
+      setAuth: (user, token, refreshToken) =>
+        set({ user, token, refreshToken, isAuthenticated: true }),
+      setTokens: (token, refreshToken) => set({ token, refreshToken }),
       logout: () =>
-        set(() => ({ user: null, token: null, isAuthenticated: false })),
+        set(() => ({
+          user: null,
+          token: null,
+          refreshToken: null,
+          isAuthenticated: false,
+        })),
     }),
     {
       name: "auth-storage",
