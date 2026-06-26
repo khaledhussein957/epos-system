@@ -2,7 +2,7 @@
 
 An Electronic Point-of-Sale platform with an Express/Bun backend and an Expo React Native mobile client. Cashiers ring up orders, customers browse and order from their phone, and admins manage products, categories, users, and revenue.
 
-**Developed by [Khalid Hussein](https://github.com/khaledhussein957).**
+**Developed by [Khalid Hussein](https://faceboom.com/khaledhussein957).**
 
 ## Repository layout
 
