@@ -32,6 +32,8 @@ export default function PosScreen() {
   const [search, setSearch] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [paymentAccount, setPaymentAccount] = useState("");
+  const [discountInput, setDiscountInput] = useState("");
+  const [taxInput, setTaxInput] = useState("");
   const [receipt, setReceipt] = useState<{ id: string; url?: string } | null>(
     null,
   );
@@ -47,6 +49,11 @@ export default function PosScreen() {
     () => selectCartTotals(items),
     [items],
   );
+
+  const discount = Math.max(Number(discountInput) || 0, 0);
+  const tax = Math.max(Number(taxInput) || 0, 0);
+  const total = Math.max(subtotal - discount + tax, 0);
+  const discountTooLarge = discount > subtotal;
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
@@ -68,11 +75,17 @@ export default function PosScreen() {
       notify.error("Payment account required for mobile / bank");
       return;
     }
+    if (discountTooLarge) {
+      notify.error("Discount cannot exceed subtotal");
+      return;
+    }
 
     try {
       const result = await createOrder.mutateAsync({
         payment_method: paymentMethod,
         payment_account: needsAccount ? paymentAccount.trim() : undefined,
+        discount: discount > 0 ? discount : undefined,
+        tax: tax > 0 ? tax : undefined,
         items: items.map((it) => ({
           product_id: it.product.id,
           quantity: it.quantity,
@@ -82,6 +95,8 @@ export default function PosScreen() {
       setReceipt({ id: result.order.id?.toString() ?? "", url: result.receiptUrl });
       clearCart();
       setPaymentAccount("");
+      setDiscountInput("");
+      setTaxInput("");
     } catch {
       // toast already fired by hook
     }
@@ -202,20 +217,88 @@ export default function PosScreen() {
           />
         )}
 
+        <View className="flex-row gap-2 mb-3">
+          <View className="flex-1">
+            <Text className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">
+              Discount
+            </Text>
+            <TextInput
+              value={discountInput}
+              onChangeText={setDiscountInput}
+              placeholder="0.00"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="decimal-pad"
+              className={`border rounded-xl px-3 py-2 text-black dark:text-white bg-white dark:bg-zinc-800 ${
+                discountTooLarge
+                  ? "border-red-500"
+                  : "border-gray-200 dark:border-zinc-700"
+              }`}
+            />
+          </View>
+          <View className="flex-1">
+            <Text className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">
+              Tax
+            </Text>
+            <TextInput
+              value={taxInput}
+              onChangeText={setTaxInput}
+              placeholder="0.00"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="decimal-pad"
+              className="border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-black dark:text-white bg-white dark:bg-zinc-800"
+            />
+          </View>
+        </View>
+
+        {(discount > 0 || tax > 0) && (
+          <View className="mb-3 gap-0.5">
+            <View className="flex-row justify-between">
+              <Text className="text-xs text-gray-500 dark:text-gray-400">
+                Subtotal
+              </Text>
+              <Text className="text-xs text-black dark:text-white">
+                ${subtotal.toFixed(2)}
+              </Text>
+            </View>
+            {discount > 0 && (
+              <View className="flex-row justify-between">
+                <Text className="text-xs text-gray-500 dark:text-gray-400">
+                  Discount
+                </Text>
+                <Text className="text-xs text-red-500">
+                  −${discount.toFixed(2)}
+                </Text>
+              </View>
+            )}
+            {tax > 0 && (
+              <View className="flex-row justify-between">
+                <Text className="text-xs text-gray-500 dark:text-gray-400">
+                  Tax
+                </Text>
+                <Text className="text-xs text-black dark:text-white">
+                  ${tax.toFixed(2)}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
         <View className="flex-row items-center">
           <View className="flex-1">
             <Text className="text-xs text-gray-500 dark:text-gray-400">
               {itemCount} item{itemCount === 1 ? "" : "s"}
             </Text>
             <Text className="text-xl font-bold text-black dark:text-white">
-              ${subtotal.toFixed(2)}
+              ${total.toFixed(2)}
             </Text>
           </View>
           <TouchableOpacity
             onPress={handleCheckout}
-            disabled={createOrder.isPending || items.length === 0}
+            disabled={
+              createOrder.isPending || items.length === 0 || discountTooLarge
+            }
             className={`px-6 py-3 rounded-xl ${
-              createOrder.isPending || items.length === 0
+              createOrder.isPending || items.length === 0 || discountTooLarge
                 ? "bg-gray-300 dark:bg-zinc-700"
                 : "bg-primary"
             }`}

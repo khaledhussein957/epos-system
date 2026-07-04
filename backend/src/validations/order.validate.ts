@@ -15,6 +15,8 @@ export const createOrderSchema = z
       .string()
       .optional()
       .describe("Required for mobile or bank payments"),
+    discount: z.coerce.number().nonnegative("Discount cannot be negative").default(0),
+    tax: z.coerce.number().nonnegative("Tax cannot be negative").default(0),
     items: z
       .array(
         z.object({

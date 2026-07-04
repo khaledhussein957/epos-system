@@ -81,7 +81,7 @@ export const processTransaction = async (
     }
 
     const productMap = new Map(dbProducts.map((p) => [p.id, p]));
-    let totalAmount = 0;
+    let subtotal = 0;
 
     for (const item of input.items) {
       const product = productMap.get(item.product_id);
@@ -96,16 +96,28 @@ export const processTransaction = async (
         );
       }
 
-      totalAmount += Number(product.price) * item.quantity;
+      subtotal += Number(product.price) * item.quantity;
     }
+
+    const discount = input.discount ?? 0;
+    const tax = input.tax ?? 0;
+
+    if (discount > subtotal) {
+      throw new AppError("Discount cannot exceed subtotal", 400);
+    }
+
+    const total = Math.max(subtotal - discount + tax, 0);
 
     // 3. Create Order
     const ordersInserted = await tx
       .insert(orders)
       .values({
         user_id: userId,
-        customer_id: customerId as string, // Might be undefined if anonymous allowed
-        total: totalAmount.toFixed(2),
+        customer_id: customerId as string,
+        subtotal: subtotal.toFixed(2),
+        discount: discount.toFixed(2),
+        tax: tax.toFixed(2),
+        total: total.toFixed(2),
         payment_method: input.payment_method,
       })
       .returning();
