@@ -27,6 +27,11 @@ export const orders = pgTable(
       .references(() => users.id),
     customer_id: uuid("customer_id").references(() => customers.id),
 
+    subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
+    discount: numeric("discount", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0"),
+    tax: numeric("tax", { precision: 12, scale: 2 }).notNull().default("0"),
     total: numeric("total", { precision: 12, scale: 2 }).notNull(),
 
     payment_method: PaymentMethod("payment_method").notNull(),

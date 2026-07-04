@@ -13,6 +13,9 @@ export interface ReceiptData {
     price: number;
     subtotal: number;
   }[];
+  subtotal: number;
+  discount: number;
+  tax: number;
   total: number;
 }
 
@@ -80,7 +83,17 @@ export const generateReceipt = async (data: ReceiptData): Promise<string> => {
       doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
       doc.moveDown();
 
-      // Total
+      // Totals breakdown
+      doc.fontSize(11).font("Helvetica");
+      doc.text(`Subtotal: $${data.subtotal.toFixed(2)}`, { align: "right" });
+      if (data.discount > 0) {
+        doc.text(`Discount: -$${data.discount.toFixed(2)}`, { align: "right" });
+      }
+      if (data.tax > 0) {
+        doc.text(`Tax: $${data.tax.toFixed(2)}`, { align: "right" });
+      }
+      doc.moveDown(0.5);
+
       doc
         .fontSize(14)
         .font("Helvetica-Bold")

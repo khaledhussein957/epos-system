@@ -15,6 +15,9 @@ export interface CreateOrderPayload {
   payment_method: PaymentMethod;
   payment_account?: string;
 
+  discount?: number;
+  tax?: number;
+
   items: OrderItemInput[];
 }
 

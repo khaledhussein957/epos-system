@@ -65,6 +65,9 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
         price: parseFloat(oi.price),
         subtotal: parseFloat(oi.price) * oi.quantity,
       })),
+      subtotal: parseFloat(order.subtotal),
+      discount: parseFloat(order.discount),
+      tax: parseFloat(order.tax),
       total: parseFloat(order.total),
     };
 
