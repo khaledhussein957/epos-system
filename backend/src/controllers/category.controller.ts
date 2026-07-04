@@ -1,5 +1,6 @@
 import type { Response } from "express";
 import { eq } from "drizzle-orm";
+import { logger } from "../utils/logger";
 
 import { db } from "../config/db";
 import { categories as categoryTable } from "../models/category.model";
@@ -56,7 +57,7 @@ export const createCategory = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({ category: newCategory });
   } catch (error: any) {
-    console.error("Error creating category:", error);
+    logger.error({ err: error }, "Error creating category:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -76,7 +77,7 @@ export const getCategories = async (req: AuthRequest, res: Response) => {
     const categories = await get_AllCategories();
     res.status(200).json({ categories });
   } catch (error: any) {
-    console.error("Error getting categories:", error);
+    logger.error({ err: error }, "Error getting categories:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -134,7 +135,7 @@ export const updateCategory = async (req: AuthRequest, res: Response) => {
       category: updatedCategory,
     });
   } catch (error: any) {
-    console.error("Error updating category:", error);
+    logger.error({ err: error }, "Error updating category:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -192,7 +193,7 @@ export const deleteCategory = async (req: AuthRequest, res: Response) => {
 
     res.status(200).json({ message: "Category deleted successfully" });
   } catch (error: any) {
-    console.error("Error deleting category:", error);
+    logger.error({ err: error }, "Error deleting category:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }

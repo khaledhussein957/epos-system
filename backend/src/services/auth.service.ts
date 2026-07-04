@@ -1,4 +1,5 @@
 import { and, eq, isNull, gt } from "drizzle-orm";
+import { logger } from "../utils/logger";
 
 import { db } from "../config/db";
 
@@ -182,7 +183,7 @@ export const recoveryPassword = async (email: string) => {
   const codeExpiry = resetPasswordCodeExpiration(15); // 15 minutes
 
   if (process.env.NODE_ENV === "development") {
-    console.log("Reset Code:", resetCode, "Code Expires:", codeExpiry);
+    logger.info({ resetCode, codeExpiry }, "reset code generated (dev only)");
   }
 
   await db

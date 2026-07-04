@@ -1,5 +1,6 @@
 import type { Response } from "express";
 import { z } from "zod";
+import { logger } from "../utils/logger";
 
 import type { AuthRequest } from "../middlewares/protectRoute.middleware";
 import { AppError } from "../utils/AppError";
@@ -36,7 +37,7 @@ const handleError = (res: Response, error: unknown, fallback: string) => {
       .status(400)
       .json({ message: "Validation error", errors: error.issues });
   }
-  console.error(fallback, error);
+  logger.error({ err: error }, fallback);
   return res.status(500).json({ message: fallback });
 };
 

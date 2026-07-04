@@ -1,4 +1,5 @@
 import { and, eq, ne } from "drizzle-orm";
+import { logger } from "../utils/logger";
 
 import { db } from "../config/db";
 
@@ -36,7 +37,7 @@ export const create_Category = async (name: string, file?: any) => {
     folder: "categories",
     resource_type: "image",
   });
-  console.log("done the upload");
+  logger.info("done the upload");
 
   const [newCategory] = await db
     .insert(categoryTable)

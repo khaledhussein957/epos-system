@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 import { ENV } from "./env";
+import { logger } from "../utils/logger";
 
 import { schema } from "../models/schema.ts";
 
@@ -28,14 +29,13 @@ export const pool = new Pool({
 let logged = false;
 pool.on("connect", () => {
   if (!logged) {
-    console.log("Database pool ready ✅");
+    logger.info("database pool ready");
     logged = true;
   }
 });
 
-// log when an error occurs
 pool.on("error", (err) => {
-  console.error("💥 Database connection error:", err);
+  logger.error({ err }, "database pool error");
 });
 
 export const db = drizzle(pool, { schema });

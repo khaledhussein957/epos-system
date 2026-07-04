@@ -1,5 +1,6 @@
 import { eq, ne } from "drizzle-orm";
 import { unlink } from "fs/promises";
+import { logger } from "../utils/logger";
 
 import { db } from "../config/db";
 import cloudinary from "../config/cloudinary";
@@ -125,9 +126,9 @@ export const upload_profile_image = async (
   if (user.profilePublicId) {
     try {
       await cloudinary.uploader.destroy(user.profilePublicId);
-      console.log("✅ Old avatar destroyed:", user.profilePublicId);
+      logger.info({ publicId: user.profilePublicId }, "old avatar destroyed");
     } catch (error) {
-      console.log(`❌ Error destroying old avatar: ${error}`);
+      logger.warn({ err: error }, "failed to destroy old avatar");
     }
   }
 
@@ -141,7 +142,7 @@ export const upload_profile_image = async (
   try {
     await unlink(profileImage);
   } catch (error) {
-    console.error("Error deleting local file:", error);
+    logger.error({ err: error }, "Error deleting local file:");
   }
 
   const updatedUser = await db
@@ -263,10 +264,10 @@ export const delete_user = async (
         .split(".")[0];
       if (publicId) {
         await cloudinary.uploader.destroy(publicId);
-        console.log("✅ Old avatar destroyed:", publicId);
+        logger.info({ publicId }, "old avatar destroyed");
       }
     } catch (error) {
-      console.log(`❌ Error destroying old avatar: ${error}`);
+      logger.warn({ err: error }, "failed to destroy old avatar");
     }
   }
 
@@ -309,10 +310,10 @@ export const delete_account = async (userId: string, password: string) => {
         .split(".")[0];
       if (publicId) {
         await cloudinary.uploader.destroy(publicId);
-        console.log("✅ Old avatar destroyed:", publicId);
+        logger.info({ publicId }, "old avatar destroyed");
       }
     } catch (error) {
-      console.log(`❌ Error destroying old avatar: ${error}`);
+      logger.warn({ err: error }, "failed to destroy old avatar");
     }
   }
 

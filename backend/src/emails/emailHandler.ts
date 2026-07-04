@@ -1,4 +1,5 @@
 import { getTransporter } from "../config/nodemailer";
+import { logger } from "../utils/logger";
 
 import { ENV } from "../config/env";
 
@@ -25,7 +26,7 @@ export const sendResetPasswordEmail = async (
 
     return true;
   } catch (error) {
-    console.error("Error sending verification email:", error);
+    logger.error({ err: error }, "Error sending verification email:");
     throw new Error("Error sending verification email: " + error);
   }
 };
@@ -49,7 +50,7 @@ export const sendSuccessResetPasswordEmail = async (email: string) => {
 
     return true;
   } catch (error) {
-    console.error("Error sending success email:", error);
+    logger.error({ err: error }, "Error sending success email:");
     throw new Error("Error sending success email: " + error);
   }
 };

@@ -1,5 +1,6 @@
 import { and, eq, ne } from "drizzle-orm";
 import { unlink } from "fs/promises";
+import { logger } from "../utils/logger";
 
 import { db } from "../config/db";
 import cloudinary from "../config/cloudinary";
@@ -15,7 +16,7 @@ const safeUnlink = async (filePath: string) => {
   try {
     await unlink(filePath);
   } catch (error) {
-    console.error("Error deleting local file:", error);
+    logger.error({ err: error }, "Error deleting local file:");
   }
 };
 
@@ -236,7 +237,7 @@ export const upload_product_image = async (
     try {
       await cloudinary.uploader.destroy(product.image_public_id);
     } catch (error) {
-      console.error("Error deleting previous image:", error);
+      logger.error({ err: error }, "Error deleting previous image:");
     }
   }
 
@@ -336,7 +337,7 @@ export const delete_product = async (productId: string) => {
     try {
       await cloudinary.uploader.destroy(product.image_public_id!);
     } catch (error) {
-      console.error("Error deleting image from Cloudinary:", error);
+      logger.error({ err: error }, "Error deleting image from Cloudinary:");
     }
   }
 
