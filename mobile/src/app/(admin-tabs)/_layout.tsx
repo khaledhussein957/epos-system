@@ -7,8 +7,13 @@ export default function AdminTabLayout() {
   const { isAuthenticated, user } = useAuthStore();
 
   if (!isAuthenticated) return <Redirect href="/(auth)" />;
-  
-  if (user?.role !== "admin") return <Redirect href="/(user-tabs)" />;
+
+  const isAdmin = user?.role === "admin";
+  const isCashier = user?.role === "cashier";
+
+  if (!isAdmin && !isCashier) return <Redirect href="/(user-tabs)" />;
+
+  const adminOnly = isAdmin ? undefined : null;
 
   return (
     <Tabs
@@ -27,8 +32,18 @@ export default function AdminTabLayout() {
         name="index"
         options={{
           title: "Dashboard",
+          href: adminOnly,
           tabBarIcon: ({ color }) => (
             <SymbolView name="chart.bar.fill" size={24} tintColor={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="pos"
+        options={{
+          title: "POS",
+          tabBarIcon: ({ color }) => (
+            <SymbolView name="cart.badge.plus" size={24} tintColor={color} />
           ),
         }}
       />
@@ -36,6 +51,7 @@ export default function AdminTabLayout() {
         name="products"
         options={{
           title: "Products",
+          href: adminOnly,
           tabBarIcon: ({ color }) => (
             <SymbolView name="square.grid.2x2.fill" size={24} tintColor={color} />
           ),
@@ -45,6 +61,7 @@ export default function AdminTabLayout() {
         name="categories"
         options={{
           title: "Categories",
+          href: adminOnly,
           tabBarIcon: ({ color }) => (
             <SymbolView name="list.bullet" size={24} tintColor={color} />
           ),
@@ -63,6 +80,7 @@ export default function AdminTabLayout() {
         name="users"
         options={{
           title: "Users",
+          href: adminOnly,
           tabBarIcon: ({ color }) => (
             <SymbolView name="person.2.fill" size={24} tintColor={color} />
           ),
