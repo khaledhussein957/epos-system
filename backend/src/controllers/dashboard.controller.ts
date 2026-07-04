@@ -1,4 +1,5 @@
 import type { Response } from "express";
+import { logger } from "../utils/logger";
 
 import type { AuthRequest } from "../middlewares/protectRoute.middleware";
 
@@ -18,7 +19,7 @@ export const controller_get_DashboardData = async (
       data: dashboardData,
     });
   } catch (error: any) {
-    console.error(`Error in controller_get_DashboardData: ${error.message}`);
+    logger.error({ err: error }, "controller_get_DashboardData failed");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }

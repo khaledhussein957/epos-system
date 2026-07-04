@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import { logger } from "../utils/logger";
 
 import { db } from "../config/db";
 import { verifyToken } from "../utils/auth.util";
@@ -62,7 +63,7 @@ export const protectRoute = async (
 
     next();
   } catch (error: any) {
-    console.error(`❌ Error in protectRoute: ${error.message}`);
+    logger.error({ err: error }, "protectRoute failed");
     return res
       .status(500)
       .json({ message: error.message || "Something went wrong" });

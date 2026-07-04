@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { ENV } from "../config/env";
+import { logger } from "../utils/logger";
 
 export const stripe = new Stripe(ENV.STRIPE_SECRET_KEY);
 
@@ -21,7 +22,7 @@ export const createPaymentIntent = async (
       id: paymentIntent.id,
     };
   } catch (error) {
-    console.error("❌ Stripe Payment Intent Error:", error);
+    logger.error({ err: error }, "❌ Stripe Payment Intent Error:");
     throw new Error("Failed to initialize card payment");
   }
 };

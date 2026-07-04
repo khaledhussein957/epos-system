@@ -1,4 +1,5 @@
 import Qrcode from "qrcode";
+import { logger } from "../utils/logger";
 
 export const generateProductQrCode = async (
   productId: string,
@@ -7,7 +8,7 @@ export const generateProductQrCode = async (
     const qrCodeDataUrl = await Qrcode.toDataURL(productId);
     return qrCodeDataUrl;
   } catch (error) {
-    console.error("Error generating QR code:", error);
+    logger.error({ err: error }, "Error generating QR code:");
     throw error;
   }
 };

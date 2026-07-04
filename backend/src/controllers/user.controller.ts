@@ -1,5 +1,6 @@
 import type { Response } from "express";
 import { eq, ne } from "drizzle-orm";
+import { logger } from "../utils/logger";
 
 import { db } from "../config/db";
 
@@ -46,7 +47,7 @@ export const getAllUsers = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json({ users });
   } catch (error: any) {
-    console.error("Get All Users error:", error);
+    logger.error({ err: error }, "Get All Users error:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -83,7 +84,7 @@ export const toggleBlockUser = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json(result);
   } catch (error: any) {
-    console.error("Toggle Block User error:", error);
+    logger.error({ err: error }, "Toggle Block User error:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -125,7 +126,7 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json(result);
   } catch (error: any) {
-    console.error("Change Password error:", error);
+    logger.error({ err: error }, "Change Password error:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -157,7 +158,7 @@ export const uploadProfileImage = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json(result);
   } catch (error: any) {
-    console.error("Upload Profile Image error:", error);
+    logger.error({ err: error }, "Upload Profile Image error:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -194,7 +195,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json(result);
   } catch (error: any) {
-    console.error("Update Profile error:", error);
+    logger.error({ err: error }, "Update Profile error:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -270,7 +271,7 @@ export const updateUserProfile = async (req: AuthRequest, res: Response) => {
       .status(200)
       .json({ message: "User profile updated successfully" });
   } catch (error: any) {
-    console.error("Update User Profile error:", error);
+    logger.error({ err: error }, "Update User Profile error:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -317,7 +318,7 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json(result);
   } catch (error: any) {
-    console.error("Delete User error:", error);
+    logger.error({ err: error }, "Delete User error:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -354,7 +355,7 @@ export const deleteAccount = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json(result);
   } catch (error: any) {
-    console.error("Delete Account error:", error);
+    logger.error({ err: error }, "Delete Account error:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }

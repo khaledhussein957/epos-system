@@ -40,4 +40,8 @@ export const ENV = {
   API_KEY: process.env.API_KEY || "",
 
   WAAFIPAY_URL: process.env.WAAFIPAY_URL || "",
+
+  LOG_LEVEL:
+    process.env.LOG_LEVEL ||
+    (process.env.NODE_ENV === "production" ? "info" : "debug"),
 };

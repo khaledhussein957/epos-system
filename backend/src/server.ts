@@ -5,6 +5,7 @@ import helmet from "helmet";
 import { ENV } from "./config/env";
 
 import { errorHandler } from "./middlewares/errorHandler.ts";
+import { requestLogger } from "./middlewares/requestLogger.middleware";
 
 import authRouter from "./routes/auth.route";
 import userRoute from "./routes/user.route";
@@ -18,6 +19,7 @@ import reportsRoute from "./routes/reports.route";
 const app = express();
 
 app.use(helmet());
+app.use(requestLogger);
 
 app.use(
   cors({

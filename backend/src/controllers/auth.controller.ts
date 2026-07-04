@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { logger } from "../utils/logger";
 
 import {
   registerUser,
@@ -34,7 +35,7 @@ export const registerAccount = async (req: Request, res: Response) => {
 
     res.json(result);
   } catch (error: any) {
-    console.log("❌ Error in register account:", error);
+    logger.warn({ err: error }, "❌ Error in register account:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -65,7 +66,7 @@ export const loginAccount = async (req: Request, res: Response) => {
 
     res.json(result);
   } catch (error: any) {
-    console.log("❌ Error in login account:", error);
+    logger.warn({ err: error }, "❌ Error in login account:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -98,7 +99,7 @@ export const recoverPasswordAccount = async (req: Request, res: Response) => {
       message: "Password recovery email sent.",
     });
   } catch (error: any) {
-    console.log("Error in recovery password account:", error);
+    logger.warn({ err: error }, "Error in recovery password account:");
 
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
@@ -125,7 +126,7 @@ export const refreshAccount = async (req: Request, res: Response) => {
     const result = await refreshSession(refreshToken);
     return res.json(result);
   } catch (error: any) {
-    console.log("Error in refresh account:", error);
+    logger.warn({ err: error }, "Error in refresh account:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -141,7 +142,7 @@ export const logoutAccount = async (req: Request, res: Response) => {
     await revokeRefreshToken(refreshToken ?? "");
     return res.json({ message: "Logged out" });
   } catch (error: any) {
-    console.log("Error in logout account:", error);
+    logger.warn({ err: error }, "Error in logout account:");
     return res
       .status(500)
       .json({ message: error.message || "Logout failed" });
@@ -166,7 +167,7 @@ export const resetPasswordAccount = async (req: Request, res: Response) => {
       message: "Password reset successful",
     });
   } catch (error: any) {
-    console.log("❌ Error in reset password account:", error);
+    logger.warn({ err: error }, "❌ Error in reset password account:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }

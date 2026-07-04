@@ -1,4 +1,5 @@
 import type { Response } from "express";
+import { logger } from "../utils/logger";
 
 import type { AuthRequest } from "../middlewares/protectRoute.middleware";
 
@@ -25,7 +26,7 @@ export const getAllOrders = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json({ orders });
   } catch (error: any) {
-    console.error("❌ Error fetching orders:", error);
+    logger.error({ err: error }, "❌ Error fetching orders:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -79,7 +80,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       receiptUrl,
     });
   } catch (error: any) {
-    console.error("❌ Error creating order:", error);
+    logger.error({ err: error }, "❌ Error creating order:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -107,7 +108,7 @@ export const getMyOrders = async (req: AuthRequest, res: Response) => {
       orders: userOrders,
     });
   } catch (error: any) {
-    console.error("Error fetching my orders:", error);
+    logger.error({ err: error }, "Error fetching my orders:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }

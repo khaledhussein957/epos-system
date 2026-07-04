@@ -1,5 +1,6 @@
 import type { Response } from "express";
 import { eq } from "drizzle-orm";
+import { logger } from "../utils/logger";
 
 import { db } from "../config/db";
 
@@ -71,7 +72,7 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
 
     return res.status(201).json({ product });
   } catch (error: any) {
-    console.error("Error creating product:", error);
+    logger.error({ err: error }, "Error creating product:");
 
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
@@ -94,7 +95,7 @@ export const getProducts = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json({ products });
   } catch (error: any) {
-    console.error("Error getting products:", error);
+    logger.error({ err: error }, "Error getting products:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -146,7 +147,7 @@ export const adjustProductStock = async (req: AuthRequest, res: Response) => {
         .status(400)
         .json({ message: "Validation error", errors: error.issues });
     }
-    console.error("Error adjusting stock:", error);
+    logger.error({ err: error }, "Error adjusting stock:");
     return res.status(500).json({ message: "Failed to adjust stock" });
   }
 };
@@ -169,7 +170,7 @@ export const getStockAdjustments = async (req: AuthRequest, res: Response) => {
     if (error instanceof AppError) {
       return res.status(error.status).json({ message: error.message });
     }
-    console.error("Error listing stock adjustments:", error);
+    logger.error({ err: error }, "Error listing stock adjustments:");
     return res.status(500).json({ message: "Failed to load history" });
   }
 };
@@ -194,7 +195,7 @@ export const getProductByBarcode = async (req: AuthRequest, res: Response) => {
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
-    console.error("Error looking up product by barcode:", error);
+    logger.error({ err: error }, "Error looking up product by barcode:");
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -207,7 +208,7 @@ export const getProductById = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json({ product });
   } catch (error: any) {
-    console.error("Error getting product:", error);
+    logger.error({ err: error }, "Error getting product:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -259,7 +260,7 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json({ product });
   } catch (error: any) {
-    console.error("Error updating product:", error);
+    logger.error({ err: error }, "Error updating product:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -301,7 +302,7 @@ export const uploadProductImage = async (req: AuthRequest, res: Response) => {
       data: updatedProduct,
     });
   } catch (error: any) {
-    console.error("Error uploading product image:", error);
+    logger.error({ err: error }, "Error uploading product image:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }
@@ -364,7 +365,7 @@ export const deleteProduct = async (req: AuthRequest, res: Response) => {
 
     return res.status(200).json({ message: "Product deleted successfully" });
   } catch (error: any) {
-    console.error("Error deleting product:", error);
+    logger.error({ err: error }, "Error deleting product:");
     if (typeof error?.status === "number") {
       return res.status(error.status).json({ message: error.message });
     }

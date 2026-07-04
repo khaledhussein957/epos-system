@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import axios from "axios";
 import { ENV } from "../config/env";
+import { logger } from "../utils/logger";
 
 export type WaafiPaymentMethod = "MWALLET_ACCOUNT" | "MWALLET_BANKACCOUNT";
 
@@ -60,7 +61,7 @@ export const initiateWaafiPurchase = async (params: WaafiPurchaseParams) => {
       data,
     };
   } catch (error: any) {
-    console.error("❌ WaafiPay Purchase Error:", error.message || error);
+    logger.error("❌ WaafiPay Purchase Error:", error.message || error);
     return {
       success: false,
       responseMsg: "WaafiPay Connection Error",
