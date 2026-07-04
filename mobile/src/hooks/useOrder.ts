@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { useRouter } from "expo-router";
 
 import { api } from "../lib/axios";
 import { useAuthStore } from "../store/auth.store";
@@ -22,7 +21,6 @@ export const useGetOrders = () => {
 };
 
 export const useCreateOrder = () => {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -34,9 +32,7 @@ export const useCreateOrder = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["orders", "me"] });
-
-      notify.success("Order created");
-      router.push("/orders");
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (error: AxiosError<{ message?: string }>) => {
       notify.error(

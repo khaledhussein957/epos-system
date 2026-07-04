@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useRouter } from "expo-router";
 
@@ -21,6 +21,11 @@ const errorMessage = (
   fallback: string,
 ) => error.response?.data?.message ?? fallback;
 
+const landingRoute = (role: string | undefined): "/(admin-tabs)" | "/(user-tabs)" => {
+  if (role === "admin" || role === "cashier") return "/(admin-tabs)";
+  return "/(user-tabs)";
+};
+
 export const useRegister = () => {
   const router = useRouter();
   const { setAuth } = useAuthStore();
@@ -35,8 +40,8 @@ export const useRegister = () => {
       return data;
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.token);
-      router.replace(data.user.role === "admin" ? "/(admin-tabs)" : "/(user-tabs)");
+      setAuth(data.user, data.token, data.refreshToken);
+      router.replace(landingRoute(data.user.role));
     },
     onError: (error: AxiosError<{ message?: string }>) => {
       notify.error("Registration failed", errorMessage(error, "Try again."));
@@ -55,8 +60,8 @@ export const useLogin = () => {
       return data;
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.token);
-      router.replace(data.user.role === "admin" ? "/(admin-tabs)" : "/(user-tabs)");
+      setAuth(data.user, data.token, data.refreshToken);
+      router.replace(landingRoute(data.user.role));
     },
     onError: (error: AxiosError<{ message?: string }>) => {
       notify.error("Sign in failed", errorMessage(error, "Check your credentials."));
