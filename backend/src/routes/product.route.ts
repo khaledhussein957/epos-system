@@ -4,6 +4,7 @@ import {
     createProduct,
     deleteProduct,
     getProducts,
+    getProductByBarcode,
     getProductById,
     uploadProductImage,
     updateProduct,
@@ -22,6 +23,7 @@ router.post(
 );
 
 router.get("/", getProducts);
+router.get("/by-barcode/:code", protectRoute, getProductByBarcode);
 router.get("/:id", getProductById);
 
 router.put("/:id", protectRoute, updateProduct);

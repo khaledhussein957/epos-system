@@ -38,6 +38,7 @@ export interface IProduct {
   is_active: boolean;
 
   qr_code: string;
+  barcode: string | null;
 
   category: ICategory;
 

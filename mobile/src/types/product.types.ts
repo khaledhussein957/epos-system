@@ -8,6 +8,7 @@ export interface CreateProductPayload {
   stock: number;
   is_active: boolean;
   imageUri: string;
+  barcode?: string;
 }
 
 export interface CreateProductResponse {
@@ -23,6 +24,7 @@ export interface UpdateProductPayload {
   stock?: number;
   is_active?: boolean;
   imageUri?: string;
+  barcode?: string | null;
 }
 
 export interface UpdateProductResponse {

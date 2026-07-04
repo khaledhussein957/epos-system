@@ -29,6 +29,7 @@ export const products = pgTable(
     image_url: text("image_url"),
     image_public_id: text("image_public_id"),
     qr_code: text("qr_code").notNull(),
+    barcode: text("barcode").unique(),
 
     created_at: timestamp("created_at").defaultNow().notNull(),
     updated_at: timestamp("updated_at")

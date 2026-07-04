@@ -17,6 +17,7 @@ import {
   create_product,
   delete_product,
   get_all_products,
+  get_product_by_barcode,
   get_product_by_id,
   update_product,
   upload_product_image,
@@ -45,7 +46,7 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const { name, description, category_id, price, stock, is_active } =
+    const { name, description, category_id, price, stock, is_active, barcode } =
       parsed.data;
 
     const image = req.file?.path;
@@ -61,6 +62,7 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
       Number(stock),
       is_active,
       image,
+      barcode,
     );
 
     return res.status(201).json({ product });
@@ -100,6 +102,31 @@ export const getProducts = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({
       message: error.message || "Internal server error",
     });
+  }
+};
+
+export const getProductByBarcode = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    if (req.user.role !== "admin" && req.user.role !== "cashier") {
+      return res.status(403).json({ message: "Staff only" });
+    }
+
+    const code = req.params.code;
+    if (typeof code !== "string" || !code) {
+      return res.status(400).json({ message: "Barcode is required" });
+    }
+
+    const product = await get_product_by_barcode(code);
+    return res.status(200).json({ product });
+  } catch (error: any) {
+    if (typeof error?.status === "number") {
+      return res.status(error.status).json({ message: error.message });
+    }
+    console.error("Error looking up product by barcode:", error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -147,7 +174,7 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
         .json({ message: "Validation error", errors: formattedErrors });
     }
 
-    const { name, description, category_id, price, stock, is_active } =
+    const { name, description, category_id, price, stock, is_active, barcode } =
       bodyValidation.data;
 
     const product = await update_product(
@@ -158,6 +185,7 @@ export const updateProduct = async (req: AuthRequest, res: Response) => {
       Number(stock),
       is_active!,
       productId as string,
+      barcode,
     );
 
     return res.status(200).json({ product });

@@ -51,6 +51,7 @@ const createDefaults = (categories: ICategory[]): CreateProductInput => ({
   stock: 0,
   is_active: true,
   imageUri: "",
+  barcode: "",
 });
 
 const updateDefaultsFromProduct = (product: IProduct): UpdateProductInput => ({
@@ -61,6 +62,7 @@ const updateDefaultsFromProduct = (product: IProduct): UpdateProductInput => ({
   stock: Number(product.stock),
   is_active: product.is_active,
   imageUri: "",
+  barcode: product.barcode ?? "",
 });
 
 export const ProductForm = (props: ProductFormProps) => {
@@ -130,6 +132,12 @@ export const ProductForm = (props: ProductFormProps) => {
         stock: update.stock,
         is_active: update.is_active,
         imageUri: update.imageUri?.trim() ? update.imageUri.trim() : undefined,
+        barcode:
+          update.barcode === undefined
+            ? undefined
+            : update.barcode.trim()
+              ? update.barcode.trim()
+              : null,
       },
       { onSuccess: handleClose },
     );
@@ -219,6 +227,22 @@ export const ProductForm = (props: ProductFormProps) => {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   error={errors.imageUri?.message}
+                  autoCapitalize="none"
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="barcode"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Field
+                  label="Barcode (optional)"
+                  placeholder="EAN / UPC / QR"
+                  value={String(value ?? "")}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  error={errors.barcode?.message}
                   autoCapitalize="none"
                 />
               )}

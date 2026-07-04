@@ -43,6 +43,13 @@ export const useGetProduct = (id: string) => {
   });
 };
 
+export const getProductByBarcode = async (code: string): Promise<IProduct> => {
+  const { data } = await api.get<{ product: IProduct }>(
+    `/products/by-barcode/${encodeURIComponent(code)}`,
+  );
+  return data.product;
+};
+
 export const useCreateProduct = () => {
   const queryClient = useQueryClient();
 
@@ -56,6 +63,9 @@ export const useCreateProduct = () => {
       formData.append("price", String(payload.price));
       formData.append("stock", String(payload.stock));
       formData.append("is_active", String(payload.is_active));
+      if (payload.barcode?.trim()) {
+        formData.append("barcode", payload.barcode.trim());
+      }
       appendFile(formData, "productImage", getFileMeta(payload.imageUri, "product"));
 
       const { data } = await api.post<CreateProductResponse>(
@@ -117,6 +127,7 @@ export const useUpdateProduct = () => {
           price: payload.price,
           stock: payload.stock,
           is_active: payload.is_active,
+          barcode: payload.barcode,
         },
       );
 

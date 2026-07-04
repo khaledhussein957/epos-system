@@ -26,6 +26,7 @@ export const create_product = async (
   stock: number,
   isActive: boolean,
   productImage: string,
+  barcode?: string,
 ) => {
   // 📂 Check category exists
   const category = await db.query.categories.findFirst({
@@ -63,6 +64,7 @@ export const create_product = async (
         image_url: UploadResult.secure_url,
         image_public_id: UploadResult.public_id,
         qr_code: "",
+        barcode: barcode?.trim() ? barcode.trim() : null,
       })
       .returning();
 
@@ -100,6 +102,19 @@ export const get_product_by_id = async (productId: string) => {
   return product;
 };
 
+export const get_product_by_barcode = async (barcode: string) => {
+  const product = await db.query.products.findFirst({
+    where: eq(productTable.barcode, barcode),
+    with: { category: true },
+  });
+
+  if (!product) {
+    throw new AppError("No product matches that barcode", 404);
+  }
+
+  return product;
+};
+
 export const update_product = async (
   name: string,
   description: string,
@@ -108,6 +123,7 @@ export const update_product = async (
   stock: number,
   is_active: boolean,
   productId: string,
+  barcode?: string | null,
 ) => {
   // Check if product exists
   const existingProduct = await db.query.products.findFirst({
@@ -141,6 +157,12 @@ export const update_product = async (
         is_active,
         image_url: existingProduct.image_url,
         qr_code: "",
+        barcode:
+          barcode === undefined
+            ? existingProduct.barcode
+            : barcode?.trim()
+              ? barcode.trim()
+              : null,
       })
       .where(eq(productTable.id, productId as string))
       .returning();
