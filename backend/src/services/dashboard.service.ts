@@ -3,9 +3,9 @@ import { count, sum, eq, ne } from "drizzle-orm";
 import { db } from "../config/db";
 import { categories as categoryTable } from "../models/category.model";
 import { orders as orderTable } from "../models/orders.model";
-import { orderItems as orderItemsTable } from "../models/orderItems.model";
 import { products as productTable } from "../models/product.model";
 import { users as userTable } from "../models/user.model";
+import { AppError } from "../utils/AppError";
 
 export const get_DashboardData = async (userId: string) => {
   const user = await db.query.users.findFirst({
@@ -13,17 +13,11 @@ export const get_DashboardData = async (userId: string) => {
   });
 
   if (!user) {
-    const err = new Error("User not found") as Error & { status?: number };
-    err.status = 404;
-    throw err;
+    throw new AppError("User not found", 404);
   }
 
   if (user.role !== "admin") {
-    const err = new Error("Forbidden: admin role required") as Error & {
-      status?: number;
-    };
-    err.status = 403;
-    throw err;
+    throw new AppError("Forbidden: admin role required", 403);
   }
 
   const [
@@ -43,7 +37,7 @@ export const get_DashboardData = async (userId: string) => {
       .where(ne(orderTable.user_id, userId)),
     db.select({ total: count() }).from(productTable),
     db.select({ total: count() }).from(categoryTable),
-    db.select({ total: sum(orderItemsTable.price) }).from(orderItemsTable),
+    db.select({ total: sum(orderTable.total) }).from(orderTable),
   ]);
 
   return {
