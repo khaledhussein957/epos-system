@@ -11,6 +11,8 @@ export const createProductSchema = zod.object({
   stock: zod.string().nonempty("Stock is required"),
 
   is_active: zod.boolean().default(true),
+
+  barcode: zod.string().trim().min(1).max(64).optional(),
 });
 
 export const updateProductSchema = zod.object({
@@ -35,6 +37,14 @@ export const updateProductSchema = zod.object({
     .optional(),
 
   is_active: zod.boolean().optional(),
+
+  barcode: zod
+    .string()
+    .trim()
+    .min(1)
+    .max(64)
+    .nullable()
+    .optional(),
 });
 
 export const deleteProductSchema = zod.object({

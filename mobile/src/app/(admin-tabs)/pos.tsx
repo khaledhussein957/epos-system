@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { SymbolView } from "expo-symbols";
+import { useRouter } from "expo-router";
 
 import { useGetProducts } from "@/hooks/useProduct";
 import { useCreateOrder } from "@/hooks/useOrder";
@@ -41,6 +42,7 @@ export default function PosScreen() {
     null,
   );
 
+  const router = useRouter();
   const { data: products, isLoading, refetch, isFetching } = useGetProducts();
   const items = useCartStore((s) => s.items);
   const addItem = useCartStore((s) => s.addItem);
@@ -120,14 +122,21 @@ export default function PosScreen() {
         )}
       </View>
 
-      <View className="px-4 pb-3">
+      <View className="px-4 pb-3 flex-row items-center gap-2">
         <TextInput
           value={search}
           onChangeText={setSearch}
           placeholder="Search products by name…"
           placeholderTextColor="#9CA3AF"
-          className="border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-black dark:text-white bg-white dark:bg-zinc-800"
+          className="flex-1 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-black dark:text-white bg-white dark:bg-zinc-800"
         />
+        <TouchableOpacity
+          onPress={() => router.push("/screens/scanner")}
+          className="w-12 h-12 rounded-xl bg-primary items-center justify-center"
+          accessibilityLabel="Scan barcode"
+        >
+          <SymbolView name="barcode.viewfinder" size={22} tintColor="white" />
+        </TouchableOpacity>
       </View>
 
       {isLoading ? (

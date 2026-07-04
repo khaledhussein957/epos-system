@@ -19,6 +19,7 @@ export const createProductSchema = zod.object({
         value.startsWith("ph://"),
       "Use a local image URI like file://...",
     ),
+  barcode: zod.string().trim().max(64).optional().or(zod.literal("")),
 });
 
 export const updateProductSchema = zod.object({
@@ -42,6 +43,7 @@ export const updateProductSchema = zod.object({
         value.startsWith("ph://"),
       "Use a local image URI like file://...",
     ),
+  barcode: zod.string().trim().max(64).optional().or(zod.literal("")),
 });
 
 export type CreateProductInput = zod.infer<typeof createProductSchema>;
