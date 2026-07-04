@@ -14,14 +14,18 @@ import {
   deleteProductSchema,
 } from "../validations/product.validate.ts";
 import {
+  adjust_stock,
   create_product,
   delete_product,
   get_all_products,
   get_product_by_barcode,
   get_product_by_id,
+  list_stock_adjustments,
   update_product,
   upload_product_image,
 } from "../services/product.service.ts";
+import { z } from "zod";
+import { AppError } from "../utils/AppError.ts";
 
 export const createProduct = async (req: AuthRequest, res: Response) => {
   try {
@@ -102,6 +106,71 @@ export const getProducts = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({
       message: error.message || "Internal server error",
     });
+  }
+};
+
+const adjustStockSchema = z.object({
+  delta: z.coerce
+    .number()
+    .int("Delta must be an integer")
+    .refine((n) => n !== 0, "Delta must be non-zero"),
+  reason: z.string().trim().max(200).optional(),
+});
+
+export const adjustProductStock = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ message: "Unauthorized" });
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Admins only" });
+    }
+
+    const productId = req.params.id;
+    if (typeof productId !== "string" || !productId) {
+      return res.status(400).json({ message: "Product id is required" });
+    }
+
+    const parsed = adjustStockSchema.parse(req.body);
+    const result = await adjust_stock(
+      productId,
+      req.user.id,
+      parsed.delta,
+      parsed.reason,
+    );
+    return res.status(200).json(result);
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      return res.status(error.status).json({ message: error.message });
+    }
+    if (error?.name === "ZodError") {
+      return res
+        .status(400)
+        .json({ message: "Validation error", errors: error.issues });
+    }
+    console.error("Error adjusting stock:", error);
+    return res.status(500).json({ message: "Failed to adjust stock" });
+  }
+};
+
+export const getStockAdjustments = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ message: "Unauthorized" });
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Admins only" });
+    }
+
+    const productId = req.params.id;
+    if (typeof productId !== "string" || !productId) {
+      return res.status(400).json({ message: "Product id is required" });
+    }
+
+    const data = await list_stock_adjustments(productId);
+    return res.status(200).json({ data });
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      return res.status(error.status).json({ message: error.message });
+    }
+    console.error("Error listing stock adjustments:", error);
+    return res.status(500).json({ message: "Failed to load history" });
   }
 };
 

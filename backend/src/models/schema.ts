@@ -7,6 +7,7 @@ import { orderItems } from "./orderItems.model";
 import { customers } from "./customers.model";
 import { payments } from "./payment.model";
 import { refreshTokens } from "./refreshToken.model";
+import { stockAdjustments } from "./stockAdjustment.model";
 
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
@@ -61,6 +62,7 @@ export const schema = {
   customers,
   payments,
   refreshTokens,
+  stockAdjustments,
   usersRelations,
   ordersRelations,
   orderItemsRelations,

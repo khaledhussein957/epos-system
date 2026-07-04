@@ -22,6 +22,13 @@
       "when": 1783149931139,
       "tag": "0002_add_product_barcode",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783150523382,
+      "tag": "0003_add_stock_adjustments",
+      "breakpoints": true
     }
   ]
 }

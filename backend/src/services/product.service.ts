@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { unlink } from "fs/promises";
 
 import { db } from "../config/db";
@@ -6,6 +6,7 @@ import cloudinary from "../config/cloudinary";
 
 import { products as productTable } from "../models/product.model";
 import { categories as categoryTable } from "../models/category.model";
+import { stockAdjustments } from "../models/stockAdjustment.model";
 
 import { generateProductQrCode } from "../utils/product.util";
 import { AppError } from "../utils/AppError";
@@ -15,6 +16,26 @@ const safeUnlink = async (filePath: string) => {
     await unlink(filePath);
   } catch (error) {
     console.error("Error deleting local file:", error);
+  }
+};
+
+const assertBarcodeAvailable = async (
+  barcode: string,
+  excludeProductId?: string,
+) => {
+  const where = excludeProductId
+    ? and(
+        eq(productTable.barcode, barcode),
+        ne(productTable.id, excludeProductId),
+      )
+    : eq(productTable.barcode, barcode);
+
+  const clash = await db.query.products.findFirst({ where });
+  if (clash) {
+    throw new AppError(
+      "Another product already uses this barcode",
+      409,
+    );
   }
 };
 
@@ -36,6 +57,16 @@ export const create_product = async (
   if (!category) {
     await safeUnlink(productImage);
     throw new AppError("Category not found", 404);
+  }
+
+  const cleanBarcode = barcode?.trim() || undefined;
+  if (cleanBarcode) {
+    try {
+      await assertBarcodeAvailable(cleanBarcode);
+    } catch (error) {
+      await safeUnlink(productImage);
+      throw error;
+    }
   }
 
   let UploadResult;
@@ -64,7 +95,7 @@ export const create_product = async (
         image_url: UploadResult.secure_url,
         image_public_id: UploadResult.public_id,
         qr_code: "",
-        barcode: barcode?.trim() ? barcode.trim() : null,
+        barcode: cleanBarcode ?? null,
       })
       .returning();
 
@@ -145,6 +176,17 @@ export const update_product = async (
     }
   }
 
+  const nextBarcode: string | null =
+    barcode === undefined
+      ? existingProduct.barcode
+      : barcode?.trim()
+        ? barcode.trim()
+        : null;
+
+  if (nextBarcode && nextBarcode !== existingProduct.barcode) {
+    await assertBarcodeAvailable(nextBarcode, productId);
+  }
+
   const result = await db.transaction(async (tx) => {
     const [updatedProduct] = await tx
       .update(productTable)
@@ -157,12 +199,7 @@ export const update_product = async (
         is_active,
         image_url: existingProduct.image_url,
         qr_code: "",
-        barcode:
-          barcode === undefined
-            ? existingProduct.barcode
-            : barcode?.trim()
-              ? barcode.trim()
-              : null,
+        barcode: nextBarcode,
       })
       .where(eq(productTable.id, productId as string))
       .returning();
@@ -223,6 +260,66 @@ export const upload_product_image = async (
     .returning();
 
   return updatedProduct;
+};
+
+export const adjust_stock = async (
+  productId: string,
+  userId: string,
+  delta: number,
+  reason?: string,
+) => {
+  if (!Number.isInteger(delta) || delta === 0) {
+    throw new AppError("Delta must be a non-zero integer", 400);
+  }
+
+  return db.transaction(async (tx) => {
+    const product = await tx.query.products.findFirst({
+      where: eq(productTable.id, productId),
+    });
+
+    if (!product) {
+      throw new AppError("Product not found", 404);
+    }
+
+    const nextStock = product.stock + delta;
+    if (nextStock < 0) {
+      throw new AppError(
+        `Adjustment would drop stock below zero (current ${product.stock})`,
+        409,
+      );
+    }
+
+    await tx
+      .update(productTable)
+      .set({ stock: nextStock })
+      .where(eq(productTable.id, productId));
+
+    const [entry] = await tx
+      .insert(stockAdjustments)
+      .values({
+        product_id: productId,
+        user_id: userId,
+        delta,
+        reason: reason?.trim() || null,
+        stock_after: nextStock,
+      })
+      .returning();
+
+    return { product: { ...product, stock: nextStock }, adjustment: entry };
+  });
+};
+
+export const list_stock_adjustments = async (productId: string) => {
+  const product = await db.query.products.findFirst({
+    where: eq(productTable.id, productId),
+  });
+  if (!product) throw new AppError("Product not found", 404);
+
+  return db.query.stockAdjustments.findMany({
+    where: eq(stockAdjustments.product_id, productId),
+    orderBy: (t, { desc }) => [desc(t.created_at)],
+    limit: 50,
+  });
 };
 
 export const delete_product = async (productId: string) => {

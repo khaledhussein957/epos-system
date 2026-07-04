@@ -1,11 +1,13 @@
 import { Router } from "express";
 
 import {
+    adjustProductStock,
     createProduct,
     deleteProduct,
     getProducts,
     getProductByBarcode,
     getProductById,
+    getStockAdjustments,
     uploadProductImage,
     updateProduct,
 } from "../controllers/product.controller";
@@ -33,6 +35,8 @@ router.put(
   uploadProduct.single("productImage"),
   uploadProductImage,
 );
+router.post("/:id/adjust-stock", protectRoute, adjustProductStock);
+router.get("/:id/stock-history", protectRoute, getStockAdjustments);
 
 router.delete("/:id", protectRoute, deleteProduct);
 
