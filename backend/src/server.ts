@@ -12,6 +12,7 @@ import categoryRoute from "./routes/category.route";
 import productRoute from "./routes/product.route";
 import orderRoute from "./routes/order.route";
 import dashboardRoute from "./routes/dashboard.route";
+import reportsRoute from "./routes/reports.route";
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use("/api/categories", categoryRoute);
 app.use("/api/products", productRoute);
 app.use("/api/orders", orderRoute);
 app.use("/api/dashboard", dashboardRoute);
+app.use("/api/reports", reportsRoute);
 
 app.use(errorHandler);
 

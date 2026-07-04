@@ -77,6 +77,20 @@ export default function AdminTabLayout() {
         }}
       />
       <Tabs.Screen
+        name="reports"
+        options={{
+          title: "Reports",
+          href: adminOnly,
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name="chart.line.uptrend.xyaxis"
+              size={24}
+              tintColor={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="users"
         options={{
           title: "Users",
