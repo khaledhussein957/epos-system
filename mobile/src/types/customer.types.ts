@@ -1,4 +1,4 @@
-import { ICustomer } from ".";
+import { ICustomer, IOrder } from ".";
 
 export interface CreateCustomerPayload {
   name: string;
@@ -6,6 +6,16 @@ export interface CreateCustomerPayload {
   email: string;
 }
 
-export interface CreateCustomerResponse {
+export interface UpdateCustomerPayload {
+  id: string;
+  name?: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface CustomerHistoryResponse {
   customer: ICustomer;
+  orderCount: number;
+  lifetimeSpend: number;
+  orders: IOrder[];
 }

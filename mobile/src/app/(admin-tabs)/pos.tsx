@@ -18,8 +18,9 @@ import { useGetProducts } from "@/hooks/useProduct";
 import { useCreateOrder } from "@/hooks/useOrder";
 import { selectCartTotals, useCartStore } from "@/store/cart.store";
 import { notify } from "@/lib/notify";
+import { CustomerPicker } from "@/components/customer_picker";
 import type { PaymentMethod } from "@/types/order.types";
-import type { IProduct } from "@/types";
+import type { ICustomer, IProduct } from "@/types";
 
 const PAYMENT_METHODS: { key: PaymentMethod; label: string; icon: string }[] = [
   { key: "cash", label: "Cash", icon: "banknote.fill" },
@@ -34,6 +35,8 @@ export default function PosScreen() {
   const [paymentAccount, setPaymentAccount] = useState("");
   const [discountInput, setDiscountInput] = useState("");
   const [taxInput, setTaxInput] = useState("");
+  const [customer, setCustomer] = useState<ICustomer | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [receipt, setReceipt] = useState<{ id: string; url?: string } | null>(
     null,
   );
@@ -86,6 +89,7 @@ export default function PosScreen() {
         payment_account: needsAccount ? paymentAccount.trim() : undefined,
         discount: discount > 0 ? discount : undefined,
         tax: tax > 0 ? tax : undefined,
+        customer_id: customer?.id,
         items: items.map((it) => ({
           product_id: it.product.id,
           quantity: it.quantity,
@@ -97,6 +101,7 @@ export default function PosScreen() {
       setPaymentAccount("");
       setDiscountInput("");
       setTaxInput("");
+      setCustomer(null);
     } catch {
       // toast already fired by hook
     }
@@ -177,6 +182,44 @@ export default function PosScreen() {
             />
           </View>
         )}
+
+        <TouchableOpacity
+          onPress={() => setPickerOpen(true)}
+          className="flex-row items-center bg-gray-100 dark:bg-zinc-800 rounded-xl px-3 py-2 mb-3"
+        >
+          <SymbolView
+            name="person.crop.circle"
+            size={16}
+            tintColor="#6B7280"
+          />
+          <View className="flex-1 ml-2">
+            {customer ? (
+              <>
+                <Text
+                  className="text-sm font-semibold text-black dark:text-white"
+                  numberOfLines={1}
+                >
+                  {customer.name}
+                </Text>
+                <Text
+                  className="text-[10px] text-gray-500 dark:text-gray-400"
+                  numberOfLines={1}
+                >
+                  {customer.email}
+                </Text>
+              </>
+            ) : (
+              <Text className="text-sm text-gray-600 dark:text-gray-300">
+                Walk-in customer · tap to select
+              </Text>
+            )}
+          </View>
+          {customer && (
+            <TouchableOpacity onPress={() => setCustomer(null)} className="p-1">
+              <SymbolView name="xmark" size={12} tintColor="#9CA3AF" />
+            </TouchableOpacity>
+          )}
+        </TouchableOpacity>
 
         <View className="flex-row gap-2 mb-3">
           {PAYMENT_METHODS.map((m) => {
@@ -313,6 +356,11 @@ export default function PosScreen() {
       </View>
 
       <ReceiptModal receipt={receipt} onClose={() => setReceipt(null)} />
+      <CustomerPicker
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={setCustomer}
+      />
     </SafeAreaView>
   );
 }

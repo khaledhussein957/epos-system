@@ -91,6 +91,16 @@ export default function AdminTabLayout() {
         }}
       />
       <Tabs.Screen
+        name="customers"
+        options={{
+          title: "Customers",
+          href: adminOnly,
+          tabBarIcon: ({ color }) => (
+            <SymbolView name="person.crop.circle" size={24} tintColor={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="users"
         options={{
           title: "Users",
