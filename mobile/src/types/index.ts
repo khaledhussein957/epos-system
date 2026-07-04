@@ -46,7 +46,7 @@ export interface IProduct {
 }
 
 export interface ICustomer {
-  id: number;
+  id: string;
 
   name: string;
   phone: string;

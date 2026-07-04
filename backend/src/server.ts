@@ -11,6 +11,7 @@ import userRoute from "./routes/user.route";
 import categoryRoute from "./routes/category.route";
 import productRoute from "./routes/product.route";
 import orderRoute from "./routes/order.route";
+import customerRoute from "./routes/customer.route";
 import dashboardRoute from "./routes/dashboard.route";
 import reportsRoute from "./routes/reports.route";
 
@@ -36,6 +37,7 @@ app.use("/api/users", userRoute);
 app.use("/api/categories", categoryRoute);
 app.use("/api/products", productRoute);
 app.use("/api/orders", orderRoute);
+app.use("/api/customers", customerRoute);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/api/reports", reportsRoute);
 
