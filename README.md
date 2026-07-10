@@ -364,5 +364,5 @@ Private. All rights reserved.
 
 ## Author
 
-**Khalid Hussein**
+**Khalid Hussein Sayid**
 GitHub: [@khaledhussein957](https://github.com/khaledhussein957)
